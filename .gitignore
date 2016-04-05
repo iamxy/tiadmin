@@ -27,7 +27,7 @@ _testmain.go
 /.idea
 .DS_Store
 
-./tiadm/tiadm
-./tiadm/*.tmp
-./tiadm/routers
-./tiadmctl/tiadmctl
+/tiadm/tiadm
+/tiadm/*.tmp
+/tiadm/routers
+/tiadmctl/tiadmctl

@@ -78,16 +78,16 @@ type ProcessRun struct {
 
 func (pr *ProcessRun) String() string {
 	runInfo := make(map[string]string)
-	runInfo["ID"] = pr.ID
+	runInfo["ID"] = strconv.Itoa(pr.ID)
 	runInfo["ProcID"] = pr.ProcID
 	runInfo["SvcName"] = pr.SvcName
 	if pr.Error != nil {
 		runInfo["Error"] = pr.Error.Error()
 	}
-	if pr.Started != nil {
+	if pr.Started.IsZero() {
 		runInfo["StartedTime"] = pr.Started.String()
 	}
-	if pr.Stopped != nil {
+	if pr.Stopped.IsZero() {
 		runInfo["StoppedTime"] = pr.Stopped.String()
 	}
 	if pr.Pwd != "" {
@@ -200,6 +200,7 @@ func (p *Process) Start() error {
 		pr.WaitingToStopped()
 		p.SetInactive()
 	}()
+	return nil
 }
 
 func (p *Process) Stop() error {
@@ -271,7 +272,7 @@ func (p *Process) NewProcessRun() ProcRun {
 	}
 
 	vars := map[string]string{
-		"PROCID": strconv.Itoa(p.ProcID),
+		"PROCID": p.ProcID,
 		"RUN":    strconv.Itoa(run),
 	}
 	if len(p.Pwd) > 0 {
@@ -361,6 +362,7 @@ func (pr *ProcessRun) Start() error {
 	ev := &Event{time.Now(), fmt.Sprintf("Process %s[%s] started as PID: %d", pr.SvcName, pr.ProcID, pr.Cmd.Process.Pid)}
 	log.Info(ev.Message)
 	pr.Events = append(pr.Events, ev)
+
 	go func() {
 		go func() {
 			io.Copy(pr.StdoutBuf, stdout)
@@ -379,6 +381,8 @@ func (pr *ProcessRun) Start() error {
 		pr.Stopped = time.Now()
 		close(pr.Stopc)
 	}()
+
+	return nil
 }
 
 func (pr *ProcessRun) Signal(sig syscall.Signal) error {

@@ -6,5 +6,5 @@ type VersionController struct {
 }
 
 func (c *VersionController) VersionInfo() {
-	c.Ctx.WriteString("tidb-admin version 1.0 !")
+	c.Ctx.WriteString("ti-admin version 1.0 !")
 }

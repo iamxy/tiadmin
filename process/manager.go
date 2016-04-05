@@ -38,11 +38,11 @@ func (pm *ProcessManager) AllActiveProcess() []Proc {
 }
 
 func (pm *ProcessManager) TotalProcess() int {
-	return nil
+	return 0
 }
 
 func (pm *ProcessManager) TotalActiveProcess() int {
-	return nil
+	return 0
 }
 
 func (pm *ProcessManager) FindByProcID(procID string) Proc {

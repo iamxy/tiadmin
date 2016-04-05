@@ -1,0 +1,521 @@
+swagger: "2.0"
+info:
+  description: |
+    REST APIs provided by tidb-admin support the management of services and process running states in a TiDB cluster.
+    [Learn about Swagger](http://swagger.io) or join the IRC channel `#swagger` on irc.freenode.net.
+  version: "1.0"
+  title: TiDB Admin REST APIs
+  termsOfService: http://helloreverb.com/terms/
+  contact:
+    name: liuy@pingcap.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+host: 127.0.0.1:8080
+basePath: /api/v1
+schemes:
+  - http
+paths:
+  /processes:
+    get:
+      tags:
+        - process
+      summary: get all processes in Ti-Cluster with either running or stopped state
+      description: ""
+      operationId: FindAllProcesses
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Process"
+        "500":
+          description: internal server error 
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      tags:
+        - process
+      summary: create a new process of specified service, and trigger started on the assigned host node of Ti-Cluster
+      description: ""
+      operationId: StartNewProcess
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: the process status infomation which inherited from the configuration of service which named as svcName 
+          required: false
+          schema:
+            $ref: "#/definitions/Process"
+      responses:
+        "200":
+          description: successful ooperation
+          schema:
+            $ref: "#/definitions/Process"
+        "500":
+          description: failed to create new process
+  /processes/findByHost:
+    get:
+      tags:
+        - process
+      summary: find all processes scheduled on given host
+      description: ""
+      operationId: FindByHost
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: machID
+          description: machID that need to be considered for filter
+          required: true
+          type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Process"
+        "400":
+          description: Invalid machID
+  /processes/findByService:
+    get:
+      tags:
+        - process
+      summary: find processes instantiated from the specified service
+      description: ""
+      operationId: FindByService
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: svcName
+          description: service name to filter by
+          required: true
+          type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Process"
+        "400":
+          description: Invalid service name
+  /processes/{procID}:
+    get:
+      tags:
+        - process
+      summary: get speciafied process by given procID
+      description: ""
+      operationId: FindProess
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: procID
+          description: procID is a unique process identifier generated in cluster, not the real PID
+          required: true
+          type: string
+      responses:
+        "404":
+          description: Process not found
+        "200":
+          description: successful operation
+          schema:
+            $ref: "#/definitions/Process"
+        "400":
+          description: Invalid procID supplied
+    delete:
+      tags:
+        - process
+      summary: destroy a process in cluster
+      description: ""
+      operationId: DestroyProcess
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: procID
+          description: procID is a unique process identifier generated in cluster, not the real PID
+          required: true
+          type: string
+      responses:
+        "404":
+          description: Process not found
+        "200":
+          description: successful operation
+          schema:
+            $ref: "#/definitions/Process"
+        "400":
+          description: Invalid procID supplied
+  /processes/{procID}/start:
+    get:
+      tags:
+        - process
+      summary: start a process which is stopped state
+      description: after trigger start, the process changes to a starting state, until fully started by backend
+      operationId: StartProcess
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: procID
+          description: procID is a unique process identifier generated in cluster, not the real PID
+          required: true
+          type: string
+      responses:
+        "404":
+          description: process not found
+        "200":
+          description: successful operation
+          schema:
+            $ref: "#/definitions/Process"
+        "400":
+          description: invalid procID supplied
+  /processes/{procID}/stop:
+    get:
+      tags:
+        - process
+      summary: stop a process which is started state
+      description: after trigger stop, the process changes to stopping state, until fully stopped by backend
+      operationId: StopProcess
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: procID
+          description: procID is a unique process identifier generated in cluster, not the real PID
+          required: true
+          type: string
+      responses:
+        "404":
+          description: process not found
+        "200":
+          description: successful operation
+          schema:
+            $ref: "#/definitions/Process"
+        "400":
+          description: invalid procID supplied
+  /hosts:
+    get:
+      tags:
+        - host
+      summary: list all hosts in the Ti-Cluster
+      description: ""
+      operationId: FindAllHosts
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Host"
+        "500":
+          description: internal server error 
+          schema:
+            $ref: "#/definitions/Error"
+  /hosts/{machID}:
+    get:
+      tags:
+        - host
+      summary: get the host infomation by a given machID
+      description: ""
+      operationId: FindHost
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: machID
+          description: machID is the unique identification of a physical machine in Ti-Cluster
+          required: true
+          type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: "#/definitions/Host"
+        "400":
+          description: invalid machID supplied
+        "404":
+          description: host not found
+  /hosts/{machID}/meta:
+    put:
+      tags:
+        - host
+      summary: update the metainfo of the specified host by given machID
+      description: ""
+      operationId: SetHostMetaInfo
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - in: path
+          name: machID
+          description: machID is the unique identification of a physical machine in Ti-Cluster
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: meta object that needs to be updated to the host
+          required: false
+          schema:
+            $ref: "#/definitions/HostMeta"
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: "#/definitions/Host"
+        "400":
+          description: invalid machID supplied
+        "404":
+          description: process not found
+  /services:
+    get:
+      tags:
+        - service
+      summary: get a list of service status in Ti-Cluster
+      description: ""
+      operationId: AllServices
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Service"
+        "500":
+          description: internal server error
+          schema:
+            $ref: "#/definitions/Error"
+  /services/{svcName}:
+    get:
+      tags:
+        - service
+      summary: get the specified service status
+      description: ""
+      operationId: Service
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: svcName
+          description: specified service name
+          required: true
+          type: string
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: "#/definitions/Service"
+        "400":
+          description: invalid svcName supplied
+        "404":
+          description: service not found
+  /version:
+    get:
+      tags:
+        - version
+      summary: show the version infomation of services in Ti-Cluster, including tidb-admin self
+      description: ""
+      operationId: VersionInfo
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: "#/definitions/Version"
+        "500":
+          description: internal server error
+definitions:
+  Process:
+    type: object
+    required:
+      - svcName
+      - machID
+      - desiredState
+    properties:
+      procID:
+        type: string
+      svcName:
+        type: string
+      machID:
+        type: string
+      desiredState:
+        type: string
+        description: started, stopped
+      currentState:
+        type: string
+      isAlive:
+        type: boolean
+      endpoints:
+        type: array
+        items:
+          type: string
+      executor:
+        type: array
+        items:
+          type: string
+      command:
+        type: string
+      args:
+        type: array
+        items:
+          type: string
+      environments:
+        type: array
+        items:
+          $ref: "#/definitions/Environment"
+      publicIP:
+        type: string
+      hostName:
+        type: string
+      hostMeta:
+        $ref: "#/definitions/HostMeta"
+      port:
+        type: integer
+        format: int32
+      protocol:
+        type: string
+  Service:
+    type: object
+    required:
+      - svcName
+    properties:
+      svcName:
+        type: string
+      version:
+        type: string
+      executor:
+        type: array
+        items:
+          type: string
+      command:
+        type: string
+      args:
+        type: array
+        items:
+          type: string
+      environments:
+        type: array
+        items:
+          $ref: "#/definitions/Environment"
+      port:
+        type: integer
+        format: int32
+      protocol:
+        type: string
+      dependencies:
+        type: array
+        items:
+          type: string
+      endpoints:
+        type: array
+        items:
+          type: string 
+  Host:
+    type: object
+    required:
+      - machID
+    properties:
+      machID:
+        type: string
+      hostName:
+        type: string
+      hostMeta:
+        $ref: "#/definitions/HostMeta"
+      publicIP:
+        type: string
+      isAlive:
+        type: boolean
+      machine:
+        $ref: "#/definitions/Machine"
+  Machine:
+    type: object
+    required:
+      - machID
+    properties:
+      machID:
+        type: string
+      usageOfCPU:
+        type: integer
+        format: int32
+        description: percentage of CPU usage
+      totalMem:
+        type: integer
+        format: int32
+        description: unit MB
+      usedMem:
+        type: integer
+        format: int32
+        description: unit MB
+      totalSwp:
+        type: integer
+        format: int32
+        description: unit MB
+      usedSwp:
+        type: integer
+        format: int32
+        description: unit MB
+      loadAvg:
+        type: array
+        items:
+          type: number
+          format: float
+      usageOfDisk:
+        type: array
+        items:
+          $ref: "#/definitions/DiskUsage"
+  DiskUsage:
+    type: object
+    properties:
+      mount:
+        type: string
+      totalSize:
+        type: integer
+        format: int32
+        description: unit MB
+      usedSize:
+        type: integer
+        format: int32
+        description: unit MB
+  Environment:
+    type: object
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+  HostMeta:
+    type: object
+    properties:
+      region:
+        type: string
+      datacenter:
+        type: string
+  Error:
+    type: object
+    properties:
+      errCode:
+        type: integer
+      reason:
+        type: string
+  Version:
+    type: object
+    properties:
+      version:
+        type: string
+      buildUTCTime:
+        type: string

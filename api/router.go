@@ -14,7 +14,7 @@ func beegoRouter() error {
 		beego.NSRouter("/services/:svcName", &ServiceController{}, "get:Service"),
 		beego.NSRouter("/processes", &ProcessController{}, "get:FindAllProcesses"),
 		beego.NSRouter("/processes", &ProcessController{}, "post:StartNewProcess"),
-		beego.NSRouter("/processes/findByHost", &ProcessController{}, "get:FindByHosts"),
+		beego.NSRouter("/processes/findByHost", &ProcessController{}, "get:FindByHost"),
 		beego.NSRouter("/processes/findByService", &ProcessController{}, "get:FindByService"),
 		beego.NSRouter("/processes/:procID", &ProcessController{}, "get:FindProcess"),
 		beego.NSRouter("/processes/:procID", &ProcessController{}, "delete:DestroyProcess"),

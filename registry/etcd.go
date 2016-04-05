@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const DefaultKeyPrefix = "/_pingcap.com/tidb-admin"
+const DefaultKeyPrefix = "/_pingcap.com/tiadmin"
 
 // EtcdRegistry implement the Registry interface and uses etcd as backend
 type EtcdRegistry struct {

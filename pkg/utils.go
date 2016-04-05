@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-func GetRootDir() (string, error) {
+func GetCmdDir() (string, error) {
 	path, err := filepath.Abs(os.Args[0])
 	if err != nil {
 		return "", err

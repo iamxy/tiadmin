@@ -14,25 +14,24 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// Parse configuration from command-line arguments, environment variables or the config file of "tidbadm.conf"
+	// Parse configuration from command-line arguments, environment variables or the config file of "tiadm.conf"
 	cfg, err := config.ParseFlag()
 	if err != nil {
 		log.Fatalf("Parsing configuration flags failed: %v", err)
 	}
-	log.SetLevelByString(cfg.LogLevel)
 
 	// Initialize server
 	if err := server.Init(cfg); err != nil {
-		log.Fatalf("Failed to initializing tidbadm server from configuration, %v", err)
+		log.Fatalf("Failed to initializing tiadmin server from configuration, %v", err)
 	}
 
-	// Start tidbadm server as daemon
+	// Start tiadmin server as daemon
 	if err := server.Run(); err != nil {
-		log.Fatalf("Starting server unsucessfully, %v", err)
+		log.Fatalf("Failed to run tiadmin server, %v", err)
 	}
 
-	// Start HTTP server to privide REST APIs
-	go api.Serve(cfg)
+	// Start HTTP server for a set of REST APIs
+	go api.ServeHttp(cfg)
 
 	shutdown := func() {
 		log.Infof("Gracefully shutting down")
@@ -50,12 +49,13 @@ func main() {
 		if err != nil {
 			log.Fatalf("Parsing configuration flags failed: %v", err)
 		}
-		log.SetLevelByString(cfg.LogLevel)
 
 		if err := server.Init(cfg); err != nil {
-			log.Fatalf("Failed to initializing tidbadm server from configuration, %v", err)
+			log.Fatalf("Failed to initializing tiadmin server from configuration, %v", err)
 		}
-		server.Run()
+		if err := server.Run(); err != nil {
+			log.Fatalf("Failed to run tiadmin server, %v", err)
+		}
 	}
 
 	dumpStatus := func() {

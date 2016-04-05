@@ -24,8 +24,8 @@ var (
 	running bool           = false
 	conf    *config.Config
 
-	ServiceManager  svc.ServiceManager
-	AgentReconciler *agent.AgentReconciler
+	SvcMgr   svc.ServiceManager
+	AgentRec *agent.AgentReconciler
 )
 
 func Init(cfg *config.Config) error {
@@ -51,22 +51,27 @@ func Init(cfg *config.Config) error {
 	evtStream := registry.NewEtcdEventStream(kAPI, cfg.EtcdKeyPrefix)
 
 	// Register all Ti-services to a map
-	ServiceManager = svc.RegisterServices(reg)
+	SvcMgr = svc.RegisterServices(reg)
 
 	// Init the manager to monitor and control the local process's state
 	procMgr := process.NewProcessManager()
 
 	// Reconciler drives the local process's state towards the desired state
 	// stored in the Registry.
-	AgentReconciler = agent.NewReconciler(reg, evtStream, procMgr)
+	AgentRec = agent.NewReconciler(reg, evtStream, procMgr)
 
 	log.Infof("Server initialized successfully")
 	return nil
 }
 
-func Run() error {
+func Run() (err error) {
 	if IsRunning() {
-		return errors.New("Server is already running now")
+		err = errors.New("Server is already running, cannot call to run repeatly")
+		return
+	}
+	if conf.IsMock {
+		log.Warnf("Server is started in mock mode, skip to Run()")
+		return
 	}
 
 	// Birth Cry
@@ -74,7 +79,7 @@ func Run() error {
 	stopc = make(chan struct{})
 	wg = sync.WaitGroup{}
 	components := []func(){
-		func() { AgentReconciler.Run(stopc) },
+		func() { AgentRec.Run(stopc) },
 	}
 
 	for _, f := range components {
@@ -88,11 +93,13 @@ func Run() error {
 
 	log.Infof("Server started successfully")
 	switchStateToRunning()
+	return
 }
 
-func Kill() error {
+func Kill() (err error) {
 	if !IsRunning() || stopc == nil {
-		return errors.New("The server not running, cannot be killed")
+		err = errors.New("The server is not running, cannot be killed")
+		return
 	}
 
 	close(stopc)
@@ -104,11 +111,13 @@ func Kill() error {
 	select {
 	case <-done:
 	case <-time.After(shutdownTimeout):
-		return errors.New("Timed out waiting for server to shutdown")
+		err = errors.New("Timed out waiting for server to shutdown")
+		return
 	}
 
-	log.Infof("Tidbadm server stopped")
+	log.Infof("Tiadmin server stopped")
 	switchStateToStopped()
+	return
 }
 
 func Purge() {

@@ -1,7 +1,7 @@
 package process
 
 import (
-	"github.com/iamxy/tidb-admin/pkg"
+	"github.com/pingcap/tiadmin/pkg"
 )
 
 type ProcessStatus struct {

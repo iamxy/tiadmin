@@ -14,7 +14,7 @@ type Service interface {
 	KillProcess(procID string) error
 	TriggerStartProcess(procID string) error
 	TriggerStopProcess(procID string) error
-	ListProcess() []proc.ProcessStatus
+	ListProcess() ([]proc.ProcessStatus, error)
 }
 
 type ServiceManager map[string]Service

@@ -1,6 +1,11 @@
 package pkg
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 type Protocol string
 type Port int
@@ -18,6 +23,25 @@ type Endpoint struct {
 }
 
 func (e Endpoint) String() string {
-	return e.Protocol + e.IPAddress + ":" + e.Port
 	return fmt.Sprintf("%s://%s:%d", e.Protocol, e.IPAddress, e.Port)
+}
+
+func ParseEndpoint(str string) (Endpoint, error) {
+	var res Endpoint
+	parts := strings.Split(str, "://")
+	if len(parts) < 2 {
+		return res, errors.New(fmt.Sprintf("Illegal endpoint string: %s", str))
+	}
+	sparts := strings.Split(parts[1], ":")
+	if len(sparts) < 2 {
+		return res, errors.New(fmt.Sprintf("Illegal endpoint string: %s", str))
+	}
+	res.Protocol = Protocol(parts[0])
+	res.IPAddress = sparts[0]
+	if port, err := strconv.Atoi(sparts[1]); err != nil {
+		return res, errors.New(fmt.Sprintf("Illegal endpoint string: %s", str))
+	} else {
+		res.Port = Port(port)
+	}
+	return res, nil
 }
