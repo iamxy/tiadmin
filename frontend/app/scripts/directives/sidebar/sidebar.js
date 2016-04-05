@@ -7,7 +7,7 @@
  * # adminPosHeader
  */
 
-angular.module('sbAdminApp')
+angular.module('tiAdminApp')
   .directive('sidebar',['$location',function($interval) {
     return {
       templateUrl:'scripts/directives/sidebar/sidebar.html',

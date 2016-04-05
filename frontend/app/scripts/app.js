@@ -1,14 +1,14 @@
 'use strict';
 /**
  * @ngdoc overview
- * @name sbAdminApp
+ * @name tiAdminApp
  * @description
- * # sbAdminApp
+ * # tiAdminApp
  *
  * Main module of the application.
  */
 angular
-  .module('sbAdminApp', [
+  .module('tiAdminApp', [
     'oc.lazyLoad',
     'ui.router',
     'ui.bootstrap',
@@ -32,7 +32,7 @@ angular
             loadMyDirectives:function($ocLazyLoad){
                 return $ocLazyLoad.load(
                 {
-                    name:'sbAdminApp',
+                    name:'tiAdminApp',
                     files:[
                     'scripts/directives/header/header.js',
                     'scripts/directives/sidebar/sidebar.js',
@@ -80,7 +80,7 @@ angular
         resolve: {
           loadMyFiles:function($ocLazyLoad) {
             return $ocLazyLoad.load({
-              name:'sbAdminApp',
+              name:'tiAdminApp',
               files:[
               'scripts/controllers/main.js',
               ]
@@ -95,7 +95,7 @@ angular
         resolve: {
           loadMyFile:function($ocLazyLoad) {
             return $ocLazyLoad.load({
-              name:'sbAdminApp',
+              name:'tiAdminApp',
               files:[
               'scripts/controllers/hostStatusController.js',
               ]
@@ -117,7 +117,7 @@ angular
               ]
             }),
             $ocLazyLoad.load({
-                name:'sbAdminApp',
+                name:'tiAdminApp',
                 files:['scripts/controllers/chartContoller.js']
             })
           }

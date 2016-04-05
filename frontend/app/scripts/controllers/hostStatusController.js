@@ -1,12 +1,12 @@
 'use strict';
 /**
  * @ngdoc function
- * @name sbAdminApp.controller:MainCtrl
+ * @name tiAdminApp.controller:MainCtrl
  * @description
  * # MainCtrl
- * Controller of the sbAdminApp
+ * Controller of the tiAdminApp
  */
-angular.module('sbAdminApp')
+angular.module('tiAdminApp')
   .controller('HostStatusCtrl', ['$stateParams', '$scope', '$timeout', function ($stateParams, $scope, $timeout) {
     $scope.hostName = $stateParams.hostName;
   }]);
