@@ -3,6 +3,8 @@
 This project is based on sb-admin-2 and sb-admin-angular
 
 ## Installation
+
+
 ####1. Clone this project or Download that ZIP file
 
 ```sh
@@ -11,6 +13,9 @@ $ git clone https://github.com/pingcap/tiadmin
 
 ####2.  Make sure you have [bower](http://bower.io/), [grunt-cli](https://www.npmjs.com/package/grunt-cli) and  [npm](https://www.npmjs.org/) installed globally
  
+```
+npm config set registry https://registry.npm.taobao.org
+```
  
 ```sh
 $ sudo apt-get install npm
