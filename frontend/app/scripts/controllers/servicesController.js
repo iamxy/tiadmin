@@ -7,7 +7,7 @@
  * Controller of the tiAdminApp
  */
 angular.module('tiAdminApp')
-    .controller('ServicesController', ['$scope', '$http', '$timeout', function($scope, $http, $timeout) {
+    .controller('ServicesController', ['$scope', '$http', '$timeout', function($scope,$http,$timeout) {
         var refreshServices = function() {
             $http.get("http://localhost:8080/api/v1/services").then(function(resp) {
                 $scope.services = resp.data;
@@ -21,5 +21,16 @@ angular.module('tiAdminApp')
             });
         };
         refreshProcesses();
+
+        var refreshHosts = function() {
+            $http.get("http://localhost:8080/api/v1/hosts").then(function(resp) {
+                $scope.hosts = resp.data;
+            });
+        };
+        refreshHosts();
+
+        $scope.spawnProcess = function() {
+          alert("here!");
+        };
 
     }]);

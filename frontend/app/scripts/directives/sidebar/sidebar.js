@@ -14,7 +14,7 @@ angular.module('tiAdminApp')
             restrict: 'E',
             replace: true,
             scope: {},
-            controller: function($scope, $interval, $http) {
+            controller: function($scope,$interval, $http) {
                 $scope.selectedMenu = 'dashboard';
                 $scope.collapseVar = 0;
                 $scope.multiCollapseVar = 0;
