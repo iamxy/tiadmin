@@ -22,39 +22,139 @@ func (r *EtcdRegistry) Processes() (map[string]*proc.ProcessStatus, error) {
 	resp, err := r.kAPI.Get(r.ctx(), key, opts)
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
-			log.Fatal("Node key[%s] not found in etcd, Ti-Cluster may not be properly bootstrapped")
+			e := errors.New(fmt.Sprintf("Node[%s] not found in etcd, Ti-Cluster may not be properly bootstrapped", key))
+			return nil, e
 		}
 		return nil, err
 	}
 
-	procIDToProcess := map[string]*proc.ProcessStatus{}
+	procIDToProcess := make(map[string]*proc.ProcessStatus)
 	for _, node := range resp.Node.Nodes {
 		_, key := path.Split(node.Key)
 		parts := strings.Split(key, "-")
 		if len(parts) < 3 {
-			log.Errorf("Node key[%v] is illegal, invalid process key parts", node.Key)
-			continue
+			e := errors.New(fmt.Sprintf("Node key[%s] is illegal, invalid key foramt of process", node.Key))
+			return nil, e
 		}
 		procID := parts[0]
 		status, err := r.processStatusFromEtcdNode(procID, node)
 		if err != nil || status == nil {
-			log.Errorf("Invalid process node, key[%v], error[%v]", node.Key, err)
-			continue
+			e := errors.New(fmt.Sprintf("Invalid process node, key[%s], error[%v]", node.Key, err))
+			return nil, e
 		}
 		procIDToProcess[procID] = status
 	}
-
 	return procIDToProcess, nil
 }
 
 func (r *EtcdRegistry) Process(procID string) (*proc.ProcessStatus, error) {
-	return nil, nil
+	key := r.prefixed(ProcessPrefix)
+	opts := &etcd.GetOptions{
+		Recursive: true,
+		Quorum:    true,
+	}
+	resp, err := r.kAPI.Get(r.ctx(), key, opts)
+	if err != nil {
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			e := errors.New(fmt.Sprintf("Node[%s] not found in etcd, Ti-Cluster may not be properly bootstrapped", key))
+			return nil, e
+		}
+		return nil, err
+	}
+
+	for _, node := range resp.Node.Nodes {
+		_, key := path.Split(node.Key)
+		parts := strings.Split(key, "-")
+		if len(parts) < 3{
+			e := errors.New(fmt.Sprintf("Node key[%s] is illegal, invalid key foramt of process", node.Key))
+			return nil, e
+		}
+		if procID != parts[0] {
+			continue
+		}
+		status, err := r.processStatusFromEtcdNode(procID, node)
+		if err != nil || status == nil {
+			e := errors.New(fmt.Sprintf("Invalid process node, key[%s], error[%v]", node.Key, err))
+			return nil, e
+		}
+		return status, nil
+	}
+	e := errors.New(fmt.Sprintf("No process found by procID[%s]", procID))
+	return nil, e
 }
+
 func (r *EtcdRegistry) ProcessesOnHost(machID string) (map[string]*proc.ProcessStatus, error) {
-	return nil, nil
+	key := r.prefixed(ProcessPrefix)
+	opts := &etcd.GetOptions{
+		Recursive: true,
+		Quorum:    true,
+	}
+	resp, err := r.kAPI.Get(r.ctx(), key, opts)
+	if err != nil {
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			e := errors.New(fmt.Sprintf("Node[%s] not found in etcd, Ti-Cluster may not be properly bootstrapped", key))
+			return nil, e
+		}
+		return nil, err
+	}
+
+	procIDToProcess := make(map[string]*proc.ProcessStatus)
+	for _, node := range resp.Node.Nodes {
+		_, key := path.Split(node.Key)
+		parts := strings.Split(key, "-")
+		if len(parts) < 3{
+			e := errors.New(fmt.Sprintf("Node key[%s] is illegal, invalid key foramt of process", node.Key))
+			return nil, e
+		}
+		procID := parts[0]
+		if machID != parts[1] {
+			continue
+		}
+		status, err := r.processStatusFromEtcdNode(procID, node)
+		if err != nil || status == nil {
+			e := errors.New(fmt.Sprintf("Invalid process node, key[%s], error[%v]", node.Key, err))
+			return nil, e
+		}
+		procIDToProcess[procID] = status
+	}
+	return procIDToProcess, nil
 }
+
 func (r *EtcdRegistry) ProcessesOfService(svcName string) (map[string]*proc.ProcessStatus, error) {
-	return nil, nil
+	key := r.prefixed(ProcessPrefix)
+	opts := &etcd.GetOptions{
+		Recursive: true,
+		Quorum:    true,
+	}
+	resp, err := r.kAPI.Get(r.ctx(), key, opts)
+	if err != nil {
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			e := errors.New(fmt.Sprintf("Node[%s] not found in etcd, Ti-Cluster may not be properly bootstrapped", key))
+			return nil, e
+		}
+		return nil, err
+	}
+
+	procIDToProcess := make(map[string]*proc.ProcessStatus)
+	for _, node := range resp.Node.Nodes {
+		_, key := path.Split(node.Key)
+		parts := strings.Split(key, "-")
+		if len(parts) < 3{
+			e := errors.New(fmt.Sprintf("Node key[%s] is illegal, invalid key foramt of process", node.Key))
+			return nil, e
+		}
+		procID := parts[0]
+		if svcName != parts[2] {
+			continue
+		}
+		status, err := r.processStatusFromEtcdNode(procID, node)
+		if err != nil || status == nil {
+			e := errors.New(fmt.Sprintf("Invalid process node, key[%s], error[%v]", node.Key, err))
+			return nil, e
+		}
+		procIDToProcess[procID] = status
+	}
+	return procIDToProcess, nil
 }
 
 // The structure of node representing a process in etcd directory:
