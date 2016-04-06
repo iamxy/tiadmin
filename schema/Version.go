@@ -3,6 +3,6 @@ package schema
 import ()
 
 type Version struct {
-	Version      string `json:"version,omitempty"`
-	BuildUTCTime string `json:"buildUTCTime,omitempty"`
+	Version      string `json:"version"`
+	BuildUTCTime string `json:"buildUTCTime"`
 }

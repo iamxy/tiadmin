@@ -3,6 +3,6 @@ package schema
 import ()
 
 type HostMeta struct {
-	Region     string `json:"region,omitempty"`
-	Datacenter string `json:"datacenter,omitempty"`
+	Region     string `json:"region"`
+	Datacenter string `json:"datacenter"`
 }

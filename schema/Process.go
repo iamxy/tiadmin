@@ -3,20 +3,20 @@ package schema
 import ()
 
 type Process struct {
-	ProcID       string        `json:"procID,omitempty"`
-	SvcName      string        `json:"svcName,omitempty"`
-	MachID       string        `json:"machID,omitempty"`
-	DesiredState string        `json:"desiredState,omitempty"`
-	CurrentState string        `json:"currentState,omitempty"`
-	IsAlive      bool          `json:"isAlive,omitempty"`
-	Endpoints    []string      `json:"endpoints,omitempty"`
-	Executor     []string      `json:"executor,omitempty"`
-	Command      string        `json:"command,omitempty"`
-	Args         []string      `json:"args,omitempty"`
-	Environments []Environment `json:"environments,omitempty"`
-	PublicIP     string        `json:"publicIP,omitempty"`
-	HostName     string        `json:"hostName,omitempty"`
-	HostMeta     HostMeta      `json:"hostMeta,omitempty"`
-	Port         int32         `json:"port,omitempty"`
-	Protocol     string        `json:"protocol,omitempty"`
+	ProcID       string        `json:"procID"`
+	SvcName      string        `json:"svcName"`
+	MachID       string        `json:"machID"`
+	DesiredState string        `json:"desiredState"`
+	CurrentState string        `json:"currentState"`
+	IsAlive      bool          `json:"isAlive"`
+	Endpoints    []string      `json:"endpoints"`
+	Executor     []string      `json:"executor"`
+	Command      string        `json:"command"`
+	Args         []string      `json:"args"`
+	Environments []Environment `json:"environments"`
+	PublicIP     string        `json:"publicIP"`
+	HostName     string        `json:"hostName"`
+	HostMeta     HostMeta      `json:"hostMeta"`
+	Port         int32         `json:"port"`
+	Protocol     string        `json:"protocol"`
 }
