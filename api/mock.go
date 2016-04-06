@@ -254,7 +254,7 @@ func (c *MockHostController) FindAllHosts() {
 
 func (c *MockHostController) FindHost() {
 	machID := c.Ctx.Input.Param(":machID")
-	if machID == "" {
+	if len(machID) == 0 {
 		c.Abort("400")
 	}
 	host, ok := mockHosts[machID]
@@ -267,7 +267,7 @@ func (c *MockHostController) FindHost() {
 
 func (c *MockHostController) SetHostMetaInfo() {
 	machID := c.Ctx.Input.Param(":machID")
-	if machID == "" {
+	if len(machID) == 0 {
 		c.Abort("400")
 	}
 	host, ok := mockHosts[machID]
@@ -276,7 +276,7 @@ func (c *MockHostController) SetHostMetaInfo() {
 	}
 	var meta schema.HostMeta
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &meta)
-	if err != nil || meta.Region == "" || meta.Datacenter == "" {
+	if err != nil || len(meta.Region) == 0 || len(meta.Datacenter) == 0 {
 		c.Abort("400")
 	}
 	host.HostMeta = meta
@@ -296,7 +296,7 @@ func (c *MockServiceController) AllServices() {
 
 func (c *MockServiceController) Service() {
 	svcName := c.Ctx.Input.Param(":svcName")
-	if svcName == "" {
+	if len(svcName) == 0 {
 		c.Abort("400")
 	}
 	svc, ok := mockServices[svcName]
@@ -319,14 +319,14 @@ func (c *MockProcessController) FindAllProcesses() {
 func (c *MockProcessController) StartNewProcess() {
 	var proc schema.Process
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &proc)
-	if err != nil || proc.SvcName == "" || proc.MachID == "" {
+	if err != nil || len(proc.SvcName) == 0 || len(proc.MachID) == 0 {
 		c.Abort("400")
 	}
 	if svc, ok := mockServices[proc.SvcName]; ok {
 		if len(proc.Executor) == 0 {
 			proc.Executor = svc.Executor
 		}
-		if proc.Command == "" {
+		if len(proc.Command) > 0 {
 			proc.Command = svc.Command
 		}
 		if len(proc.Args) == 0 {
@@ -338,7 +338,7 @@ func (c *MockProcessController) StartNewProcess() {
 		if proc.Port == 0 {
 			proc.Port = svc.Port
 		}
-		if proc.Protocol == "" {
+		if len(proc.Protocol) == 0 {
 			proc.Protocol = svc.Protocol
 		}
 	} else {
@@ -353,7 +353,7 @@ func (c *MockProcessController) StartNewProcess() {
 	}
 	proc.ProcID = strconv.Itoa(mockProcID)
 	mockProcID++
-	if proc.DesiredState == "" {
+	if len(proc.DesiredState) == 0 {
 		proc.DesiredState = "started"
 	}
 	proc.CurrentState = "stopped"
@@ -365,7 +365,7 @@ func (c *MockProcessController) StartNewProcess() {
 
 func (c *MockProcessController) FindByHost() {
 	machID := c.GetString("machID")
-	if machID == "" {
+	if len(machID) == 0 {
 		c.Abort("400")
 	}
 	if _, ok := mockHosts[machID]; ok {
@@ -384,7 +384,7 @@ func (c *MockProcessController) FindByHost() {
 
 func (c *MockProcessController) FindByService() {
 	svcName := c.GetString("svcName")
-	if svcName == "" {
+	if len(svcName) == 0 {
 		c.Abort("400")
 	}
 	if _, ok := mockServices[svcName]; ok {
@@ -403,7 +403,7 @@ func (c *MockProcessController) FindByService() {
 
 func (c *MockProcessController) FindProcess() {
 	procID := c.Ctx.Input.Param(":procID")
-	if procID == "" {
+	if len(procID) == 0 {
 		c.Abort("400")
 	}
 	if proc, ok := mockProcs[procID]; ok {
@@ -416,7 +416,7 @@ func (c *MockProcessController) FindProcess() {
 
 func (c *MockProcessController) DestroyProcess() {
 	procID := c.Ctx.Input.Param(":procID")
-	if procID == "" {
+	if len(procID) == 0 {
 		c.Abort("400")
 	}
 	if proc, ok := mockProcs[procID]; ok {
@@ -430,7 +430,7 @@ func (c *MockProcessController) DestroyProcess() {
 
 func (c *MockProcessController) StartProcess() {
 	procID := c.Ctx.Input.Param(":procID")
-	if procID == "" {
+	if len(procID) == 0 {
 		c.Abort("400")
 	}
 	if proc, ok := mockProcs[procID]; ok {
@@ -445,7 +445,7 @@ func (c *MockProcessController) StartProcess() {
 
 func (c *MockProcessController) StopProcess() {
 	procID := c.Ctx.Input.Param(":procID")
-	if procID == "" {
+	if len(procID) == 0 {
 		c.Abort("400")
 	}
 	if proc, ok := mockProcs[procID]; ok {

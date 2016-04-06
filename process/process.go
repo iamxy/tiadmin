@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"github.com/juju/errors"
 	"github.com/ngaut/log"
+	"github.com/pingcap/tiadmin/pkg"
 	"io"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,7 +31,6 @@ type Proc interface {
 	ProcRuns() []ProcRun
 	NumOfProcRuns() int
 	State() ProcessState
-	SetState(ProcessState)
 	Start() error
 	Stop() error
 }
@@ -37,8 +39,8 @@ type ProcRun interface {
 	Start() error
 	Signal(syscall.Signal) error
 	Kill() error
-	WaitingToStopped()
-	WaitingToStoppedInMillisecond(time.Duration) bool
+	WaitingStopped()
+	WaitingStoppedInMillisecond(time.Duration) bool
 }
 
 type Process struct {
@@ -46,6 +48,7 @@ type Process struct {
 	SvcName     string
 	Executor    []string
 	Command     string
+	Args        []string
 	StdoutFile  string
 	StderrFile  string
 	Environment map[string]string
@@ -53,7 +56,7 @@ type Process struct {
 	Pwd         string
 	procRuns    []ProcRun
 	active      ProcRun
-	state       ProcessState // running state assigned by process manager
+	state       ProcessState // current run state assigned by process manager
 	rwMutex     sync.RWMutex // guard of active
 }
 
@@ -90,7 +93,7 @@ func (pr *ProcessRun) String() string {
 	if pr.Stopped.IsZero() {
 		runInfo["StoppedTime"] = pr.Stopped.String()
 	}
-	if pr.Pwd != "" {
+	if len(pr.Pwd) > 0 {
 		runInfo["PWD"] = pr.Pwd
 	}
 	if pr.Cmd != nil && pr.Cmd.Process != nil && pr.Cmd.Process.Pid > 0 {
@@ -113,27 +116,59 @@ type Event struct {
 	Message string
 }
 
-func NewProcess(procMgr *ProcessManager, procID string, svcName string, executor []string, command string,
-	environment map[string]string, stdoutFile string, stderrFile string, metadata map[string]string,
-	pwd string) Proc {
-
+func NewProcess(procID string, svcName string, executor []string, command string, args []string,
+	stdoutFile string, stderrFile string, environment map[string]string, metadata map[string]string,
+	pwd string) (proc Proc, err error) {
+	var root string
+	var cmd string
+	root, err = pkg.GetRootDir()
+	if err != nil {
+		log.Errorf("GetRootDir failed, error: %v", err)
+		return nil, err
+	}
+	cmd, err = pkg.CheckFileExist(filepath.Join(root, command))
+	if err != nil {
+		cmd, err = pkg.CheckFileExist(filepath.Join(root, "bin", command))
+		if err != nil {
+			e := fmt.Sprintf("Cannot find binary file of command, %s", command)
+			return nil, errors.New(e)
+		}
+	}
+	if len(stdoutFile) > 0 || len(stderrFile) > 0 {
+		logdir := filepath.Join(root, "logs")
+		if _, err := os.Stat(logdir); err != nil {
+			if err := os.Mkdir(logdir, os.ModePerm); err != nil {
+				e := fmt.Sprintf("Failed to Mkdir %s, error: %v", logdir, err)
+				return nil, errors.New(e)
+			}
+		}
+		if len(stdoutFile) > 0 {
+			stdoutFile = filepath.Join(logdir, stdoutFile)
+		}
+		if len(stderrFile) > 0 {
+			stderrFile = filepath.Join(logdir, stderrFile)
+		}
+	}
 	environment = AddDefaultVars(environment)
 	if _, ok := environment["SERVICE"]; !ok {
 		environment["SERVICE"] = svcName
 	}
 
-	return &Process{
+	proc = &Process{
 		ProcID:      procID,
 		SvcName:     svcName,
 		Executor:    executor,
-		Command:     command,
-		StdoutFile:  ReplaceVars(stdoutFile, environment),
-		StderrFile:  ReplaceVars(stderrFile, environment),
+		Command:     cmd,
+		Args:        args,
+		StdoutFile:  stdoutFile,
+		StderrFile:  stderrFile,
 		Environment: environment,
 		Metadata:    metadata,
 		Pwd:         pwd,
 		procRuns:    make([]ProcRun, 0),
+		state:       StateStopped,
 	}
+	return
 }
 
 func (p *Process) GetProcID() string {
@@ -181,7 +216,7 @@ func (p *Process) State() ProcessState {
 	return p.state
 }
 
-func (p *Process) SetState(state ProcessState) {
+func (p *Process) setState(state ProcessState) {
 	p.rwMutex.Lock()
 	defer p.rwMutex.Unlock()
 	p.state = state
@@ -197,16 +232,18 @@ func (p *Process) Start() error {
 	}
 	p.SetActive(pr)
 	go func() {
-		pr.WaitingToStopped()
+		pr.WaitingStopped()
 		p.SetInactive()
 	}()
+	p.setState(StateStarted)
 	return nil
 }
 
 func (p *Process) Stop() error {
 	active := p.Active()
 	if active == nil {
-		log.Warn("Process is inactive, no need to stop")
+		log.Warn("Process is already dead, no need to kill")
+		p.setState(StateStopped)
 		return nil
 	}
 
@@ -214,8 +251,9 @@ func (p *Process) Stop() error {
 		log.Errorf("Send SIGINT to process unsuccessful, error: %v, procinfo: %v", err, active)
 		return err
 	} else {
-		if isStopped := active.WaitingToStoppedInMillisecond(5000); isStopped {
+		if isStopped := active.WaitingStoppedInMillisecond(5000); isStopped {
 			log.Debugf("Process terminated after SIGINT, procinfo: %v", active)
+			p.setState(StateStopped)
 			return nil // means process finished
 		}
 	}
@@ -223,8 +261,9 @@ func (p *Process) Stop() error {
 		log.Errorf("Send SIGTERM to process unsuccessful, error: %v, procinfo: %v", err, active)
 		return err
 	} else {
-		if isStopped := active.WaitingToStoppedInMillisecond(5000); isStopped {
+		if isStopped := active.WaitingStoppedInMillisecond(5000); isStopped {
 			log.Debugf("Process terminated after SIGTERM, procinfo: %v", active)
+			p.setState(StateStopped)
 			return nil // means process finished
 		}
 	}
@@ -232,8 +271,9 @@ func (p *Process) Stop() error {
 		log.Errorf("Send SIGKILL to process unsuccessful, error: %v, procinfo: %v", err, active)
 		return err
 	} else {
-		if isStopped := active.WaitingToStoppedInMillisecond(1000); isStopped {
+		if isStopped := active.WaitingStoppedInMillisecond(1000); isStopped {
 			log.Debugf("Process terminated after SIGKILL, procinfo: %v", active)
+			p.setState(StateStopped)
 			return nil // means process finished
 		}
 	}
@@ -261,16 +301,6 @@ func (p *Process) HoldProcRun(pr ProcRun) {
 
 func (p *Process) NewProcessRun() ProcRun {
 	run := p.NumOfProcRuns()
-	c := p.Command
-	c = ReplaceVars(c, p.Environment)
-	var cmd *exec.Cmd
-	if len(p.Executor) > 0 {
-		cmd = exec.Command(p.Executor[0], append(p.Executor[1:], c)...)
-	} else {
-		bits := strings.Split(c, " ")
-		cmd = exec.Command(bits[0], bits[1:]...)
-	}
-
 	vars := map[string]string{
 		"PROCID": p.ProcID,
 		"RUN":    strconv.Itoa(run),
@@ -278,7 +308,20 @@ func (p *Process) NewProcessRun() ProcRun {
 	if len(p.Pwd) > 0 {
 		vars["PWD"] = p.Pwd
 	}
+	for k, v := range p.Environment {
+		vars[k] = v
+	}
+	c := make([]string, 0)
+	if len(p.Executor) > 0 {
+		c = append(c, p.Executor...)
+	}
+	c = append(c, ReplaceVars(p.Command, vars))
+	for _, arg := range p.Args {
+		c = append(c, ReplaceVars(arg, vars))
+	}
 
+	var cmd *exec.Cmd
+	cmd = exec.Command(c[0], c[1:]...)
 	pr := &ProcessRun{
 		ID:          run,
 		Events:      make([]*Event, 0),
@@ -399,11 +442,11 @@ func (pr *ProcessRun) Kill() error {
 	return pr.Cmd.Process.Kill()
 }
 
-func (pr *ProcessRun) WaitingToStopped() {
+func (pr *ProcessRun) WaitingStopped() {
 	<-pr.Stopc
 }
 
-func (pr *ProcessRun) WaitingToStoppedInMillisecond(timeout time.Duration) bool {
+func (pr *ProcessRun) WaitingStoppedInMillisecond(timeout time.Duration) bool {
 	select {
 	case <-pr.Stopc:
 		return true

@@ -7,6 +7,7 @@ import (
 	"github.com/ngaut/log"
 	"github.com/pingcap/tiadmin/agent"
 	"github.com/pingcap/tiadmin/config"
+	"github.com/pingcap/tiadmin/machine"
 	"github.com/pingcap/tiadmin/process"
 	"github.com/pingcap/tiadmin/registry"
 	svc "github.com/pingcap/tiadmin/service"
@@ -36,6 +37,11 @@ func Init(cfg *config.Config) error {
 	// Keep configuration in global scope
 	conf = cfg
 
+	agentTTL, err := time.ParseDuration(cfg.AgentTTL)
+	if err != nil {
+		return err
+	}
+
 	// Init registry driver of etcd, and event stream
 	etcdRequestTimeout := time.Duration(cfg.EtcdRequestTimeout) * time.Millisecond
 	etcdCfg := etcd.Config{
@@ -48,17 +54,21 @@ func Init(cfg *config.Config) error {
 	}
 	kAPI := etcd.NewKeysAPI(etcdClient)
 	reg := registry.NewEtcdRegistry(kAPI, cfg.EtcdKeyPrefix, etcdRequestTimeout)
-	evtStream := registry.NewEtcdEventStream(kAPI, cfg.EtcdKeyPrefix)
+	eStream := registry.NewEtcdEventStream(kAPI, cfg.EtcdKeyPrefix)
 
 	// Register all Ti-services to a map
 	SvcMgr = svc.RegisterServices(reg)
 
-	// Init the manager to monitor and control the local process's state
+	// Init process manager for local processes
 	procMgr := process.NewProcessManager()
+	// Init machine
+	mach := machine.NewMachine()
+	// Create agent
+	ag := agent.New(reg, procMgr, mach, agentTTL)
 
 	// Reconciler drives the local process's state towards the desired state
 	// stored in the Registry.
-	AgentRec = agent.NewReconciler(reg, evtStream, procMgr)
+	AgentRec = agent.NewReconciler(reg, eStream, ag)
 
 	log.Infof("Server initialized successfully")
 	return nil

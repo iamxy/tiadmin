@@ -30,14 +30,16 @@ func (r *EtcdRegistry) Processes() (map[string]*proc.ProcessStatus, error) {
 
 	procIDToProcess := make(map[string]*proc.ProcessStatus)
 	for _, node := range resp.Node.Nodes {
-		_, key := path.Split(node.Key)
+		key := path.Base(node.Key)
 		parts := strings.Split(key, "-")
 		if len(parts) < 3 {
 			e := errors.New(fmt.Sprintf("Node key[%s] is illegal, invalid key foramt of process", node.Key))
 			return nil, e
 		}
 		procID := parts[0]
-		status, err := r.processStatusFromEtcdNode(procID, node)
+		machID := parts[1]
+		svcName := parts[2]
+		status, err := processStatusFromEtcdNode(procID, machID, svcName, node)
 		if err != nil || status == nil {
 			e := errors.New(fmt.Sprintf("Invalid process node, key[%s], error[%v]", node.Key, err))
 			return nil, e
@@ -63,16 +65,18 @@ func (r *EtcdRegistry) Process(procID string) (*proc.ProcessStatus, error) {
 	}
 
 	for _, node := range resp.Node.Nodes {
-		_, key := path.Split(node.Key)
+		key := path.Base(node.Key)
 		parts := strings.Split(key, "-")
-		if len(parts) < 3{
+		if len(parts) < 3 {
 			e := errors.New(fmt.Sprintf("Node key[%s] is illegal, invalid key foramt of process", node.Key))
 			return nil, e
 		}
 		if procID != parts[0] {
 			continue
 		}
-		status, err := r.processStatusFromEtcdNode(procID, node)
+		machID := parts[1]
+		svcName := parts[2]
+		status, err := processStatusFromEtcdNode(procID, machID, svcName, node)
 		if err != nil || status == nil {
 			e := errors.New(fmt.Sprintf("Invalid process node, key[%s], error[%v]", node.Key, err))
 			return nil, e
@@ -100,9 +104,9 @@ func (r *EtcdRegistry) ProcessesOnHost(machID string) (map[string]*proc.ProcessS
 
 	procIDToProcess := make(map[string]*proc.ProcessStatus)
 	for _, node := range resp.Node.Nodes {
-		_, key := path.Split(node.Key)
+		key := path.Base(node.Key)
 		parts := strings.Split(key, "-")
-		if len(parts) < 3{
+		if len(parts) < 3 {
 			e := errors.New(fmt.Sprintf("Node key[%s] is illegal, invalid key foramt of process", node.Key))
 			return nil, e
 		}
@@ -110,7 +114,8 @@ func (r *EtcdRegistry) ProcessesOnHost(machID string) (map[string]*proc.ProcessS
 		if machID != parts[1] {
 			continue
 		}
-		status, err := r.processStatusFromEtcdNode(procID, node)
+		svcName := parts[2]
+		status, err := processStatusFromEtcdNode(procID, machID, svcName, node)
 		if err != nil || status == nil {
 			e := errors.New(fmt.Sprintf("Invalid process node, key[%s], error[%v]", node.Key, err))
 			return nil, e
@@ -137,17 +142,18 @@ func (r *EtcdRegistry) ProcessesOfService(svcName string) (map[string]*proc.Proc
 
 	procIDToProcess := make(map[string]*proc.ProcessStatus)
 	for _, node := range resp.Node.Nodes {
-		_, key := path.Split(node.Key)
+		key := path.Base(node.Key)
 		parts := strings.Split(key, "-")
-		if len(parts) < 3{
+		if len(parts) < 3 {
 			e := errors.New(fmt.Sprintf("Node key[%s] is illegal, invalid key foramt of process", node.Key))
 			return nil, e
 		}
 		procID := parts[0]
+		machID := parts[1]
 		if svcName != parts[2] {
 			continue
 		}
-		status, err := r.processStatusFromEtcdNode(procID, node)
+		status, err := processStatusFromEtcdNode(procID, machID, svcName, node)
 		if err != nil || status == nil {
 			e := errors.New(fmt.Sprintf("Invalid process node, key[%s], error[%v]", node.Key, err))
 			return nil, e
@@ -164,24 +170,29 @@ func (r *EtcdRegistry) ProcessesOfService(svcName string) (map[string]*proc.Proc
 //                  /alive
 //                  /object
 //                  /endpoints/{endpoint}
-func (r *EtcdRegistry) processStatusFromEtcdNode(procID string, node *etcd.Node) (*proc.ProcessStatus, error) {
+func processStatusFromEtcdNode(procID, machID, svcName string, node *etcd.Node) (*proc.ProcessStatus, error) {
 	if !node.Dir {
 		return nil, errors.New(fmt.Sprintf("Invalid process node, not a etcd directory, key[%v]", node.Key))
 	}
 
-	status := &proc.ProcessStatus{}
+	status := &proc.ProcessStatus{
+		ProcID:  procID,
+		MachID:  machID,
+		SvcName: svcName,
+	}
+
 	for _, n := range node.Nodes {
-		_, key := path.Split(n.Key)
+		key := path.Base(n.Key)
 		switch key {
 		case "desired_state":
-			if state, err := r.parseProcessState(n.Value); err != nil {
+			if state, err := parseProcessState(n.Value); err != nil {
 				log.Errorf("error parsing process state, procID: %s, %v", procID, err)
 				return nil, err
 			} else {
 				status.DesiredState = state
 			}
 		case "current_state":
-			if state, err := r.parseProcessState(n.Value); err != nil {
+			if state, err := parseProcessState(n.Value); err != nil {
 				log.Errorf("error parsing process state, procID: %s, %v", procID, err)
 				return nil, err
 			} else {
@@ -190,20 +201,19 @@ func (r *EtcdRegistry) processStatusFromEtcdNode(procID string, node *etcd.Node)
 		case "alive":
 			status.IsAlive = true
 		case "object":
-			var ri proc.ProcessRunInfo
-			if err := unmarshal(n.Value, &ri); err != nil {
-				log.Errorf("error unmarshaling ProcessRunInfo(procID: %s): %v", procID, err)
+			if err := unmarshal(n.Value, &status.RunInfo); err != nil {
+				log.Errorf("error unmarshaling RunInfo, procID: %s, %v", procID, err)
 				return nil, err
 			}
 		case "endpoints":
 			for _, epNode := range n.Nodes {
 				if epNode.Value == "ok" {
-					_, str := path.Split(epNode.Key)
-					if endpoint, err := pkg.ParseEndpoint(str); err != nil {
+					str := path.Base(epNode.Key)
+					if endpoint, err := pkg.ParseEndpoint(str); err == nil {
+						status.Endpoints = append(status.Endpoints, endpoint)
+					} else {
 						log.Errorf("error parsing endpoint, procID: %s, %v", procID, err)
 						return nil, err
-					} else {
-						status.Endpoints = append(status.Endpoints, endpoint)
 					}
 				}
 			}
@@ -212,7 +222,7 @@ func (r *EtcdRegistry) processStatusFromEtcdNode(procID string, node *etcd.Node)
 	return nil, nil
 }
 
-func (r *EtcdRegistry) parseProcessState(state string) (proc.ProcessState, error) {
+func parseProcessState(state string) (proc.ProcessState, error) {
 	switch state {
 	case "started":
 		return proc.StateStarted, nil
