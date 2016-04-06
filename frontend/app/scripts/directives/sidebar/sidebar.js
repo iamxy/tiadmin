@@ -19,11 +19,14 @@ angular.module('tiAdminApp')
         $scope.selectedMenu = 'dashboard';
         $scope.collapseVar = 0;
         $scope.multiCollapseVar = 0;
-        $scope.hosts = [{ip:"192.168.1.1"},{ip:"192.168.1.2"}];
 
-        $http.get("http://localhost:8080/api/v1/hosts").then(function(resp){
-          console.log(resp);
-        })
+        var refreshNodes = function() {
+          $http.get("http://localhost:8080/api/v1/hosts").then(function(resp){
+            $scope.hosts = resp.data
+          });
+        };
+        refreshNodes();
+        setInterval(refreshNodes, 5000);
         
         $scope.check = function(x){
           if(x==$scope.collapseVar)

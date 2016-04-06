@@ -17,8 +17,10 @@
             <li ui-sref-active="active">
                 <a href="" ng-click="check(1)"><i class="fa fa-wrench fa-fw"></i> Nodes</a>
                 <ul class="nav nav-second-level" collapse="collapseVar==1">
-                    <li ng-repeat="host in hosts" ui-sref-active="">
-                        <a ui-sref="dashboard.host-status({hostName: host.ip})">{{ host.ip }} <span class="label label-success">Online</span></a>
+                    <li ng-repeat="host in hosts | orderBy: 'publicIP'" ui-sref-active="">
+                        <a ui-sref="dashboard.host-status({hostName: host.publicIP})">{{ host.publicIP }}
+                            <span class="label {{ host.isAlive? 'label-success' : 'label-warning' }}">{{ host.isAlive? 'Online' : 'Offline' }}</span>
+                        </a>
                     </li>
                 </ul>
                 <!-- /.nav-second-level -->
