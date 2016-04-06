@@ -53,6 +53,7 @@
     $http.get("http://localhost:8080/api/v1/hosts").then(function(resp){
       console.log(resp.data);
       $scope.hosts = resp.data;
+      $scope.numOfNodes = resp.data.filter(function(x) { return x.isAlive }).length;
     });
   };
   refreshNodes();

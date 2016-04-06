@@ -91,7 +91,7 @@ angular
       .state('dashboard.host-status',{
         controller: 'HostStatusCtrl',
         templateUrl:'views/dashboard/host_status.html',
-        url:'/host-status/:hostName',
+        url:'/host-status/:machID',
         resolve: {
           loadMyFile:function($ocLazyLoad) {
             return $ocLazyLoad.load({

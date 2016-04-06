@@ -25,7 +25,7 @@
                     <div class="row">
                         <div class="col-xs-3"><i class="fa fa-desktop fa-5x"></i> </div>
                         <div class="col-xs-9 text-right"> 
-                            <div class="huge ng-binding">10</div>
+                            <div class="huge ng-binding"> {{ numOfNodes }}</div>
                             <div class="ng-binding">Nodes in Cluster</div>
                         </div>
                     </div>
@@ -43,7 +43,11 @@
       <div ng-repeat="host in hosts | orderBy: 'publicIP' " ui-sref-active="" class="col-sm-3 col-md-2">
         <div class="thumbnail">
           <div class="caption">
-            <div class="row"><div class="col-md-1"><i class="fa fa-desktop fa-3"></i></div> <div class="col-md-6"><a href="#"><b>{{ host.publicIP }}</b></a></div> <div class="col-md-3"></div></div>
+            <div class="row"><div class="col-md-1"><i class="fa fa-desktop fa-3"></i></div> <div class="col-md-6">
+                <a ui-sref="dashboard.host-status({machID: host.machID})">
+                    <b>{{ host.publicIP }}</b>
+                </a>
+            </div> <div class="col-md-3"></div></div>
             <p><div class="row"><div class="col-md-2">CPU:</div> <div class="col-md-6"> {{ host.machine.usageOfCPU }} %</div></div></p>
             <p><div class="row"><div class="col-md-2">Status:</div> <div class="col-md-6"><span class="label {{ host.isAlive? 'label-success' : 'label-warning' }}">{{ host.isAlive? 'Online' : 'Offline' }}</span></div></div></p>
           </div>
