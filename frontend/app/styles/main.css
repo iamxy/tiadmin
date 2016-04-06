@@ -85,3 +85,7 @@ background-color: #eee;
 .fa-3 {
   font-size: 4em;
 }
+
+.borderless td, .borderless th {
+    border: none;
+}
