@@ -14,5 +14,3 @@ angular.module('tiAdminApp')
         replace: true,
     	}
 	});
-
-

@@ -1,9 +1,9 @@
 'use strict';
 /**
  * @ngdoc function
- * @name tiAdminApp.controller:MainCtrl
+ * @name tiAdminApp.controller:HostStatusCtrl
  * @description
- * # MainCtrl
+ * # HostStatusCtrl
  * Controller of the tiAdminApp
  */
 angular.module('tiAdminApp')

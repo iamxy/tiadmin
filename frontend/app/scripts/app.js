@@ -104,7 +104,7 @@ angular
         }
     })
       .state('dashboard.chart',{
-        templateUrl:'views/chart.html',
+        templateUrl:'views/dashboard/chart.html',
         url:'/chart',
         controller:'ChartCtrl',
         resolve: {
@@ -123,9 +123,20 @@ angular
           }
         }
     })
-      .state('dashboard.table',{
-        templateUrl:'views/table.html',
-        url:'/table'
+      .state('dashboard.services',{
+        controller: 'ServicesController',
+        templateUrl:'views/dashboard/services.html',
+        url:'/services',
+        resolve : {
+          loadMyFile: function($ocLazyLoad) {
+            return $ocLazyLoad.load({
+              name:'tiAdminApp',
+              files:[
+              'scripts/controllers/servicesController.js',
+              ]
+            })
+          }
+        }
     })
   }]);
 
