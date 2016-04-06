@@ -8,18 +8,22 @@
  */
 
 angular.module('tiAdminApp')
-  .directive('sidebar',['$location',function($interval) {
+  .directive('sidebar',['$location',function($interval, $http) {
     return {
       templateUrl:'scripts/directives/sidebar/sidebar.html',
       restrict: 'E',
       replace: true,
       scope: {
       },
-      controller:function($scope, $interval){
+      controller:function($scope, $interval, $http){
         $scope.selectedMenu = 'dashboard';
         $scope.collapseVar = 0;
         $scope.multiCollapseVar = 0;
         $scope.hosts = [{ip:"192.168.1.1"},{ip:"192.168.1.2"}];
+
+        $http.get("http://localhost:8080/api/v1/hosts").then(function(resp){
+          console.log(resp);
+        })
         
         $scope.check = function(x){
           if(x==$scope.collapseVar)

@@ -2,13 +2,15 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
+	"github.com/astaxie/beego/plugins/cors"
 	"github.com/ngaut/log"
 	"github.com/pingcap/tiadmin/config"
 	"github.com/pingcap/tiadmin/schema"
 	"github.com/pingcap/tiadmin/server"
-	"net/http"
 )
 
 func bad_request(rw http.ResponseWriter, r *http.Request) {
@@ -31,6 +33,14 @@ func ServeHttp(cfg *config.Config) {
 	beego.BConfig.CopyRequestBody = true
 
 	beego.ErrorHandler("400", bad_request)
+
+	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
+		AllowOrigins:     []string{"http://localhost:9000"},
+		AllowMethods:     []string{"PUT", "PATCH", "GET", "POST"},
+		AllowHeaders:     []string{"Origin"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
 	if cfg.IsMock {
 		if err := mockRouter(); err != nil {
