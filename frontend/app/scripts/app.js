@@ -58,10 +58,6 @@ angular
                             $ocLazyLoad.load({
                                 name: 'ngSanitize',
                                 files: ['bower_components/angular-sanitize/angular-sanitize.js']
-                            }),
-                            $ocLazyLoad.load({
-                                name: 'ngTouch',
-                                files: ['bower_components/angular-touch/angular-touch.js']
                             })
                     }
                 }

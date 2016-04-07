@@ -7,7 +7,8 @@
  * Controller of the tiAdminApp
  */
 angular.module('tiAdminApp')
-    .controller('ServicesController', ['$scope', '$http', '$timeout', function($scope,$http,$timeout) {
+    .controller('ServicesController', ['$scope', '$http', '$timeout', '$modal', function($scope, $http, $timeout, $modal) {
+
         var refreshServices = function() {
             $http.get("http://localhost:8080/api/v1/services").then(function(resp) {
                 $scope.services = resp.data;
@@ -29,8 +30,41 @@ angular.module('tiAdminApp')
         };
         refreshHosts();
 
-        $scope.spawnProcess = function() {
-          alert("here!");
-        };
+        $scope.openNewProcessDialog = function() {
+            var modalInstance = $modal.open({
+                animation: $scope.animationsEnabled,
+                templateUrl: 'NewProcessModal.html',
+                resolve: {
+                    services: function() {
+                        return $scope.services;
+                    },
+                    hosts: function() {
+                        return $scope.hosts;
+                    }
+                },
+                controller: function($scope, $modalInstance, services, hosts) {
+                    $scope.services = services;
+                    $scope.hosts = hosts;
+                    $scope.newProcData = {};
 
+                    $scope.ok = function() {
+                        if ($scope.newProcData.serviceName && $scope.newProcData.machineID) {
+                            $http.post("http://localhost:8080/api/v1/processes", {
+                                svcName: $scope.newProcData.serviceName,
+                                machID: $scope.newProcData.machineID
+                            }).then(function(resp){
+                                console.log(resp);
+                                $modalInstance.close();
+                            });
+                        } else {
+                            alert("invalid selection");
+                        }
+                    };
+
+                    $scope.cancel = function() {
+                        $modalInstance.dismiss('cancel');
+                    };
+                }
+            });
+        };
     }]);
