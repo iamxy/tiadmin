@@ -5,14 +5,17 @@ import (
 	"github.com/pingcap/tiadmin/api"
 	"github.com/pingcap/tiadmin/config"
 	"github.com/pingcap/tiadmin/server"
+	"math/rand"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 )
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	// Parse configuration from command-line arguments, environment variables or the config file of "tiadm.conf"
 	cfg, err := config.ParseFlag()

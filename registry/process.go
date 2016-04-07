@@ -88,7 +88,7 @@ func (r *EtcdRegistry) Process(procID string) (*proc.ProcessStatus, error) {
 	return nil, e
 }
 
-func (r *EtcdRegistry) ProcessesOnHost(machID string) (map[string]*proc.ProcessStatus, error) {
+func (r *EtcdRegistry) ProcessesOnMachine(machID string) (map[string]*proc.ProcessStatus, error) {
 	key := r.prefixed(processPrefix)
 	opts := &etcd.GetOptions{
 		Recursive: true,
@@ -164,7 +164,7 @@ func (r *EtcdRegistry) ProcessesOfService(svcName string) (map[string]*proc.Proc
 	return procIDToProcess, nil
 }
 
-// The structure of node representing a process in etcd directory:
+// The structure of node representing a process in etcd:
 //   /root/process/{procID}-{machID}-{svcName}
 //                  /desired-state
 //                  /current-state
@@ -175,13 +175,11 @@ func processStatusFromEtcdNode(procID, machID, svcName string, node *etcd.Node) 
 	if !node.Dir {
 		return nil, errors.New(fmt.Sprintf("Invalid process node, not a etcd directory, key[%v]", node.Key))
 	}
-
 	status := &proc.ProcessStatus{
 		ProcID:  procID,
 		MachID:  machID,
 		SvcName: svcName,
 	}
-
 	for _, n := range node.Nodes {
 		key := path.Base(n.Key)
 		switch key {
@@ -243,6 +241,7 @@ func (r *EtcdRegistry) UpdateProcessState(procID, machID, svcName string, state 
 	currentStateKey := r.prefixed(processPrefix, procKey, "current-state")
 	aliveKey := r.prefixed(processPrefix, procKey, "alive")
 
+	// update the current-state of process in etcd
 	_, err = r.kAPI.Set(r.ctx(), currentStateKey, state.String(), &etcd.SetOptions{
 		PrevValue: proc.OppositeProcessState(state).String(),
 		PrevExist: etcd.PrevExist,
@@ -257,6 +256,7 @@ func (r *EtcdRegistry) UpdateProcessState(procID, machID, svcName string, state 
 		}
 	}
 
+	// update the real alive state of process in etcd
 	if isAlive {
 		// try to touch alive node of process, update ttl
 		_, err = r.kAPI.Set(r.ctx(), aliveKey, "", &etcd.SetOptions{
@@ -278,4 +278,68 @@ func (r *EtcdRegistry) UpdateProcessState(procID, machID, svcName string, state 
 		_, err = r.kAPI.Delete(r.ctx(), aliveKey, &etcd.DeleteOptions{})
 	}
 	return
+}
+
+func (r *EtcdRegistry) CreateNewProcess(machID, svcName string, hostIP string, executor []string,
+	command string, args []string, env map[string]string, port pkg.Port, protocol pkg.Protocol) error {
+	// generate new process ID
+	procID, err := r.generateProcID()
+	if err != nil {
+		e := fmt.Sprintf("Failed to generate new process ID, %v", err)
+		log.Error(e)
+		return errors.New(e)
+	}
+	procKey := strings.Join([]string{procID, machID, svcName}, "-")
+	desiredState := proc.StateStarted
+	currentState := proc.StateStopped
+	object := &proc.ProcessRunInfo{
+		HostIP:      hostIP,
+		Executor:    executor,
+		Command:     command,
+		Args:        args,
+		Environment: env,
+		Port:        port,
+		Protocol:    protocol,
+	}
+
+	if err := r.mustCreateNode(r.prefixed(processPrefix, procKey), "", true); err != nil {
+		e := fmt.Sprintf("Failed to create node of process, %s, %v", procKey, err)
+		log.Error(e)
+		return errors.New(e)
+	}
+	if err := r.createNode(r.prefixed(processPrefix, procKey, "desired-state"), desiredState.String(), false); err != nil {
+		e := fmt.Sprintf("Failed to create desired-state of process node, %s, %v", procKey, err)
+		log.Error(e)
+		return errors.New(e)
+	}
+	if err := r.createNode(r.prefixed(processPrefix, procKey, "current-state"), currentState.String(), false); err != nil {
+		e := fmt.Sprintf("Failed to create current-state of process node, %s, %v", procKey, err)
+		log.Error(e)
+		return errors.New(e)
+	}
+	if objstr, err := marshal(object); err == nil {
+		if err := r.createNode(r.prefixed(processPrefix, procKey, "object"), objstr, false); err != nil {
+			e := fmt.Sprintf("Failed to create RunInfo of process node, %s, %v, %v", procKey, object, err)
+			log.Error(e)
+			return errors.New(e)
+		}
+	} else {
+		e := fmt.Sprintf("error marshaling RunInfo, %v, %v", object, err)
+		log.Errorf(e)
+		return errors.New(e)
+	}
+	if err := r.createNode(r.prefixed(processPrefix, procKey, "endpoints"), "", true); err != nil {
+		e := fmt.Sprintf("Failed to create endpoints of process node, %s, %v", procKey, err)
+		log.Error(e)
+		return errors.New(e)
+	}
+	return nil
+}
+
+func (r *EtcdRegistry) DestroyProcess(procID, machId, svcName string) (*proc.ProcessStatus, error) {
+	return nil, nil
+}
+
+func (r *EtcdRegistry) UpdateProcessDesiredState(procID, machID, svcName string, state proc.ProcessState) error {
+	return nil
 }

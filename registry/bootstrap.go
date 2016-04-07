@@ -7,7 +7,7 @@ import (
 
 const bootstrapPrefix = "bootstrapped"
 
-func (r *EtcdRegistry) IsBootstrapped() (bool, error) {
+func (r *EtcdRegistry) IsBootstrapped() bool {
 	key := r.prefixed(bootstrapPrefix)
 	opts := &etcd.GetOptions{
 		Quorum: true,
@@ -15,18 +15,17 @@ func (r *EtcdRegistry) IsBootstrapped() (bool, error) {
 	resp, err := r.kAPI.Get(r.ctx(), key, opts)
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
-			// not bootstrapped
-			log.Infof("The etcd registry of tiadmin not bootstrapped yet")
-			return false, nil
+			// not bootstrapped yet
+			log.Infof("The etcd registry not bootstrapped yet")
+			return false
 		}
-		return false, err
-	} else {
-		if resp.Node.Dir {
-			log.Fatalf("Node[%s] is a directory in etcd, which's unexpected", key)
-		}
-		// already bootstrapped
-		return true, nil
+		log.Fatal(err)
 	}
+	if resp.Node.Dir {
+		log.Fatalf("Node[%s] is a directory in etcd, which's unexpected", key)
+	}
+	// already bootstrapped
+	return true
 }
 
 func (r *EtcdRegistry) Bootstrap() (err error) {
@@ -37,6 +36,9 @@ func (r *EtcdRegistry) Bootstrap() (err error) {
 		return
 	}
 	if err = r.mustCreateNode(r.prefixed(jobPrefix), "", true); err != nil {
+		return
+	}
+	if err = r.mustCreateNode(r.prefixed(maxProcessID), "10000", false); err != nil {
 		return
 	}
 	if err = r.mustCreateNode(r.prefixed(bootstrapPrefix), "bootstrapped", false); err != nil {

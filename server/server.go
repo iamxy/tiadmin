@@ -53,12 +53,12 @@ func Init(cfg *config.Config) error {
 	reg := registry.NewEtcdRegistry(kAPI, cfg.EtcdKeyPrefix, etcdRequestTimeout)
 	eStream := registry.NewEtcdEventStream(kAPI, cfg.EtcdKeyPrefix)
 
-	// check whether registry bootstrapped
-	if ok, err := reg.IsBootstrapped(); err != nil {
-		log.Fatalf("Failed to check if bootstrapped in etcd, error: %v", err)
-	} else if !ok {
-		if err := reg.Bootstrap(); err != nil {
-			log.Fatalf("Bootstarp failed, error: %v", err)
+	// check whether or not the registry is bootstrapped
+	if !conf.IsMock {
+		if ok := reg.IsBootstrapped(); !ok {
+			if err := reg.Bootstrap(); err != nil {
+				log.Fatalf("Bootstarp failed, error: %v", err)
+			}
 		}
 	}
 

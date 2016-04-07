@@ -80,7 +80,7 @@ func (ar *AgentReconciler) reconcile() error {
 func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Mach, procMgr proc.ProcMgr) ([]string, error) {
 	// collect the procs which state changes and needed to be published to etcd
 	toPublish := make([]string, 0)
-	targetProcesses, err := reg.ProcessesOnHost(mach.ID())
+	targetProcesses, err := reg.ProcessesOnMachine(mach.ID())
 	if err != nil {
 		return toPublish, err
 	}

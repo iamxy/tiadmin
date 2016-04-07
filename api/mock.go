@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/astaxie/beego"
 	"github.com/pingcap/tiadmin/schema"
+	"math/rand"
 	"strconv"
 )
 
@@ -215,6 +216,8 @@ func mockRouter() error {
 		beego.NSRouter("/processes/:procID", &MockProcessController{}, "delete:DestroyProcess"),
 		beego.NSRouter("/processes/:procID/start", &MockProcessController{}, "get:StartProcess"),
 		beego.NSRouter("/processes/:procID/stop", &MockProcessController{}, "get:StopProcess"),
+		beego.NSRouter("/monitor/real/tidb_perf", &MockMonitorController{}, "get:TiDBPerformanceMetrics"),
+		beego.NSRouter("/monitor/real/tikv_storage", &MockMonitorController{}, "get:TiKVStorageMetrics"),
 	)
 	beego.AddNamespace(ns)
 	return nil
@@ -233,6 +236,10 @@ type MockServiceController struct {
 }
 
 type MockProcessController struct {
+	beego.Controller
+}
+
+type MockMonitorController struct {
 	beego.Controller
 }
 
@@ -456,4 +463,25 @@ func (c *MockProcessController) StopProcess() {
 	} else {
 		c.Abort("404")
 	}
+}
+
+func randInt(min int, max int) int {
+	return min + rand.Intn(max-min)
+}
+
+func (c *MockMonitorController) TiDBPerformanceMetrics() {
+	c.Data["json"] = schema.PerfMetrics{
+		Tps:  int32(randInt(20, 100)),
+		Qps:  int32(randInt(65, 300)),
+		Iops: int32(randInt(80, 550)),
+	}
+	c.ServeJSON()
+}
+
+func (c *MockMonitorController) TiKVStorageMetrics() {
+	c.Data["json"] = schema.StorageMetrics{
+		Usage:    int64(randInt(535, 565)),
+		Capacity: 8192,
+	}
+	c.ServeJSON()
 }
