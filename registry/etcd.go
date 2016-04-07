@@ -41,7 +41,7 @@ func isEtcdError(err error, code int) bool {
 func (r *EtcdRegistry) createNode(key, val string, isDir bool) (err error) {
 	opts := &etcd.SetOptions{
 		PrevExist: etcd.PrevNoExist,
-		Dir: isDir,
+		Dir:       isDir,
 	}
 	_, err = r.kAPI.Set(r.ctx(), key, val, opts)
 	return
@@ -50,7 +50,7 @@ func (r *EtcdRegistry) createNode(key, val string, isDir bool) (err error) {
 func (r *EtcdRegistry) deleteNode(key string, isDir bool) (err error) {
 	opts := &etcd.DeleteOptions{
 		Recursive: isDir, // weird ?
-		Dir: isDir,
+		Dir:       isDir,
 	}
 	_, err = r.kAPI.Delete(r.ctx(), key, opts)
 	return
@@ -66,4 +66,3 @@ func (r *EtcdRegistry) mustCreateNode(key, val string, isDir bool) (err error) {
 	}
 	return
 }
-

@@ -10,7 +10,7 @@ const bootstrapPrefix = "bootstrapped"
 func (r *EtcdRegistry) IsBootstrapped() (bool, error) {
 	key := r.prefixed(bootstrapPrefix)
 	opts := &etcd.GetOptions{
-		Quorum:    true,
+		Quorum: true,
 	}
 	resp, err := r.kAPI.Get(r.ctx(), key, opts)
 	if err != nil {
@@ -44,4 +44,3 @@ func (r *EtcdRegistry) Bootstrap() (err error) {
 	}
 	return
 }
-

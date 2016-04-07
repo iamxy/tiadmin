@@ -33,39 +33,40 @@ type AgentReconciler struct {
 }
 
 func (ar *AgentReconciler) Run(stopc <-chan struct{}) {
-	// when starting up, reconcile once immediately
+	// execute reconciling once immediately
 	if err := ar.reconcile(); err != nil {
 		log.Fatalf("Reconciling run failed at first time, %v", err)
 	}
 
-	// execute periodic reconciling
+	// reconciling loop
 	for {
-		ticker := ar.clock.After(ReconcileInterval)
 		select {
 		case <-stopc:
 			log.Debug("Reconciler is exiting due to stop signal")
 			return
-		case <-ticker:
+		case <-ar.clock.After(ReconcileInterval):
 			log.Debug("Trigger reconciling from tick")
-			ar.reconcile()
 			if err := ar.reconcile(); err != nil {
-				log.Errorf("Reconciling run failed, %v", err)
+				log.Errorf("Reconcile failed, %v", err)
 			}
 		case <-ar.eStream.Next(stopc):
 			log.Debug("Trigger reconciling fome etcd watcher")
 			if err := ar.reconcile(); err != nil {
-				log.Errorf("Reconciling run failed, %v", err)
+				log.Errorf("Reconcile failed, %v", err)
 			}
 		}
 	}
 }
 
-func (ar *AgentReconciler) reconcile() (err error) {
+func (ar *AgentReconciler) reconcile() error {
 	start := time.Now()
-	err = doReconcile(ar.reg, ar.eStream, ar.agent.Mach, ar.agent.ProcMgr)
+
+	toPublish, err := doReconcile(ar.reg, ar.eStream, ar.agent.Mach, ar.agent.ProcMgr)
 	if err != nil {
-		return
+		return err
 	}
+	ar.agent.Subscribe(toPublish)
+
 	elapsed := time.Now().Sub(start)
 	msg := fmt.Sprintf("Reconciling completed in %s", elapsed)
 	if elapsed > ReconcileInterval {
@@ -73,46 +74,53 @@ func (ar *AgentReconciler) reconcile() (err error) {
 	} else {
 		log.Debug(msg)
 	}
-	return
+	return nil
 }
 
-func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Mach, procMgr proc.ProcMgr) error {
+func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Mach, procMgr proc.ProcMgr) ([]string, error) {
+	// collect the procs which state changes and needed to be published to etcd
+	toPublish := make([]string, 0)
 	targetProcesses, err := reg.ProcessesOnHost(mach.ID())
 	if err != nil {
-		return err
+		return toPublish, err
 	}
 	currentProcesses := procMgr.AllProcess()
+
 	for procID, procStatus := range targetProcesses {
 		process := procMgr.FindByProcID(procID)
 		if process == nil {
 			// local process not exists, create new one
 			if _, err := procMgr.CreateProcess(procStatus); err != nil {
 				log.Errorf("Failed to create new local process, %v", procStatus)
-				return err
-			} else {
-				log.Infof("Create new local process successfully, procID: %s", procID)
+				return toPublish, err
 			}
+			log.Infof("Create new local process successfully, procID: %s", procID)
+			toPublish = append(toPublish, procID)
 		} else {
 			delete(currentProcesses, procID)
 			if procStatus.DesiredState == proc.StateStarted && process.State() == proc.StateStopped {
 				if err := procMgr.StartProcess(procID); err != nil {
 					log.Errorf("Failed to start local process, procID: %s", procID)
-					return err
+					return toPublish, err
 				}
+				toPublish = append(toPublish, procID)
 			}
 			if procStatus.DesiredState == proc.StateStopped && process.State() == proc.StateStarted {
 				if err := procMgr.StopProcess(procID); err != nil {
 					log.Errorf("Failed to stop local process, procID: %s", procID)
-					return err
+					return toPublish, err
 				}
+				toPublish = append(toPublish, procID)
 			}
 		}
 	}
+
 	for procID, _ := range currentProcesses {
 		if err := procMgr.DestroyProcess(procID); err != nil {
 			log.Errorf("Failed to destroy local process, procID: %s", procID)
-			return err
+			return toPublish, err
 		}
+		//toPublish = append(toPublish, procID)
 	}
-	return nil
+	return toPublish, nil
 }

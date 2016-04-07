@@ -54,7 +54,7 @@ func Init(cfg *config.Config) error {
 	eStream := registry.NewEtcdEventStream(kAPI, cfg.EtcdKeyPrefix)
 
 	// check whether registry bootstrapped
-	if ok, err:= reg.IsBootstrapped(); err != nil {
+	if ok, err := reg.IsBootstrapped(); err != nil {
 		log.Fatalf("Failed to check if bootstrapped in etcd, error: %v", err)
 	} else if !ok {
 		if err := reg.Bootstrap(); err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/common/log"
 	"path"
 	"strings"
+	"time"
 )
 
 const processPrefix = "process"
@@ -165,8 +166,8 @@ func (r *EtcdRegistry) ProcessesOfService(svcName string) (map[string]*proc.Proc
 
 // The structure of node representing a process in etcd directory:
 //   /root/process/{procID}-{machID}-{svcName}
-//                  /desired_state
-//                  /current_state
+//                  /desired-state
+//                  /current-state
 //                  /alive
 //                  /object
 //                  /endpoints/{endpoint}
@@ -184,14 +185,14 @@ func processStatusFromEtcdNode(procID, machID, svcName string, node *etcd.Node) 
 	for _, n := range node.Nodes {
 		key := path.Base(n.Key)
 		switch key {
-		case "desired_state":
+		case "desired-state":
 			if state, err := parseProcessState(n.Value); err != nil {
 				log.Errorf("error parsing process state, procID: %s, %v", procID, err)
 				return nil, err
 			} else {
 				status.DesiredState = state
 			}
-		case "current_state":
+		case "current-state":
 			if state, err := parseProcessState(n.Value); err != nil {
 				log.Errorf("error parsing process state, procID: %s, %v", procID, err)
 				return nil, err
@@ -235,4 +236,46 @@ func parseProcessState(state string) (proc.ProcessState, error) {
 	default:
 		return proc.StateStopped, errors.New(fmt.Sprintf("Illegal process state: %s", state))
 	}
+}
+
+func (r *EtcdRegistry) UpdateProcessState(procID, machID, svcName string, state proc.ProcessState, isAlive bool, ttl time.Duration) (err error) {
+	procKey := strings.Join([]string{procID, machID, svcName}, "-")
+	currentStateKey := r.prefixed(processPrefix, procKey, "current-state")
+	aliveKey := r.prefixed(processPrefix, procKey, "alive")
+
+	_, err = r.kAPI.Set(r.ctx(), currentStateKey, state.String(), &etcd.SetOptions{
+		PrevValue: proc.OppositeProcessState(state).String(),
+		PrevExist: etcd.PrevExist,
+	})
+	if err != nil {
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) || isEtcdError(err, etcd.ErrorCodePrevValueRequired) {
+			// state not changed or process was destroyed
+			log.Warnf("Something unexpected while updating process state of procID: %s, error: %v", err)
+		} else {
+			// with other errors
+			return
+		}
+	}
+
+	if isAlive {
+		// try to touch alive node of process, update ttl
+		_, err = r.kAPI.Set(r.ctx(), aliveKey, "", &etcd.SetOptions{
+			PrevExist: etcd.PrevExist,
+			TTL:       ttl,
+			Refresh:   true,
+		})
+		if err != nil {
+			if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+				// create new node
+				_, err = r.kAPI.Set(r.ctx(), aliveKey, "", &etcd.SetOptions{
+					PrevExist: etcd.PrevNoExist,
+					TTL:       ttl,
+				})
+			}
+		}
+	} else {
+		// delete the alive node of process
+		_, err = r.kAPI.Delete(r.ctx(), aliveKey, &etcd.DeleteOptions{})
+	}
+	return
 }

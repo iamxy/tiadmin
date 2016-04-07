@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	proc "github.com/pingcap/tiadmin/process"
+	"time"
 )
 
 // Registry interface defined a set of operations to access a distributed key value store,
@@ -26,6 +27,8 @@ type Registry interface {
 	// Retrieve all processes instantiated from the specified service
 	// return a map of procID to status infomation of process
 	ProcessesOfService(svcName string) (map[string]*proc.ProcessStatus, error)
+	// Update process current state in etcd, notice that isAlive is real run state of the local process
+	UpdateProcessState(procID, machID, svcName string, state proc.ProcessState, isAlive bool, ttl time.Duration) error
 }
 
 func marshal(obj interface{}) (string, error) {

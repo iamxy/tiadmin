@@ -18,6 +18,10 @@ import (
 
 type ProcessState string
 
+func (p ProcessState) String() string {
+	return string(p)
+}
+
 const (
 	StateStarted = ProcessState("StateStarted")
 	StateStopped = ProcessState("StateStopped")
@@ -452,5 +456,13 @@ func (pr *ProcessRun) WaitingStoppedInMillisecond(timeout time.Duration) bool {
 		return true
 	case <-time.After(timeout * time.Millisecond):
 		return false
+	}
+}
+
+func OppositeProcessState(state ProcessState) ProcessState {
+	if state == StateStarted {
+		return StateStopped
+	} else {
+		return StateStarted
 	}
 }
