@@ -10,6 +10,10 @@ import (
 // which always organizes data as directory structure, simlilar to a file system.
 // now we implemented a registry driving ETCD as backend
 type Registry interface {
+	// Check whether tiadmin registry is bootstrapped normally
+	IsBootstrapped() (bool, error)
+	// Initialize the basic directory structure of tiadmin registry
+	Bootstrap() error
 	// Return the status of process with specified procID
 	Process(procID string) (*proc.ProcessStatus, error)
 	// Retrieve all processes in Ti-Cluster,

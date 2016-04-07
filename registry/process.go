@@ -11,10 +11,10 @@ import (
 	"strings"
 )
 
-const ProcessPrefix = "process"
+const processPrefix = "process"
 
 func (r *EtcdRegistry) Processes() (map[string]*proc.ProcessStatus, error) {
-	key := r.prefixed(ProcessPrefix)
+	key := r.prefixed(processPrefix)
 	opts := &etcd.GetOptions{
 		Recursive: true,
 		Quorum:    true,
@@ -50,7 +50,7 @@ func (r *EtcdRegistry) Processes() (map[string]*proc.ProcessStatus, error) {
 }
 
 func (r *EtcdRegistry) Process(procID string) (*proc.ProcessStatus, error) {
-	key := r.prefixed(ProcessPrefix)
+	key := r.prefixed(processPrefix)
 	opts := &etcd.GetOptions{
 		Recursive: true,
 		Quorum:    true,
@@ -88,7 +88,7 @@ func (r *EtcdRegistry) Process(procID string) (*proc.ProcessStatus, error) {
 }
 
 func (r *EtcdRegistry) ProcessesOnHost(machID string) (map[string]*proc.ProcessStatus, error) {
-	key := r.prefixed(ProcessPrefix)
+	key := r.prefixed(processPrefix)
 	opts := &etcd.GetOptions{
 		Recursive: true,
 		Quorum:    true,
@@ -126,7 +126,7 @@ func (r *EtcdRegistry) ProcessesOnHost(machID string) (map[string]*proc.ProcessS
 }
 
 func (r *EtcdRegistry) ProcessesOfService(svcName string) (map[string]*proc.ProcessStatus, error) {
-	key := r.prefixed(ProcessPrefix)
+	key := r.prefixed(processPrefix)
 	opts := &etcd.GetOptions{
 		Recursive: true,
 		Quorum:    true,

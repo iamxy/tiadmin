@@ -37,3 +37,33 @@ func isEtcdError(err error, code int) bool {
 	eerr, ok := err.(etcd.Error)
 	return ok && eerr.Code == code
 }
+
+func (r *EtcdRegistry) createNode(key, val string, isDir bool) (err error) {
+	opts := &etcd.SetOptions{
+		PrevExist: etcd.PrevNoExist,
+		Dir: isDir,
+	}
+	_, err = r.kAPI.Set(r.ctx(), key, val, opts)
+	return
+}
+
+func (r *EtcdRegistry) deleteNode(key string, isDir bool) (err error) {
+	opts := &etcd.DeleteOptions{
+		Recursive: isDir, // weird ?
+		Dir: isDir,
+	}
+	_, err = r.kAPI.Delete(r.ctx(), key, opts)
+	return
+}
+
+func (r *EtcdRegistry) mustCreateNode(key, val string, isDir bool) (err error) {
+	if err = r.createNode(key, val, isDir); err != nil {
+		if isEtcdError(err, etcd.ErrorCodeNodeExist) {
+			if err = r.deleteNode(key, isDir); err == nil {
+				err = r.createNode(key, val, isDir)
+			}
+		}
+	}
+	return
+}
+

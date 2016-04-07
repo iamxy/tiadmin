@@ -8,9 +8,8 @@ import (
 	"github.com/pingcap/tiadmin/agent"
 	"github.com/pingcap/tiadmin/config"
 	"github.com/pingcap/tiadmin/machine"
-	"github.com/pingcap/tiadmin/process"
+	proc "github.com/pingcap/tiadmin/process"
 	"github.com/pingcap/tiadmin/registry"
-	svc "github.com/pingcap/tiadmin/service"
 	"sync"
 	"time"
 )
@@ -25,7 +24,6 @@ var (
 	running bool           = false
 	conf    *config.Config
 
-	SvcMgr   svc.ServiceManager
 	AgentRec *agent.AgentReconciler
 )
 
@@ -34,15 +32,14 @@ func Init(cfg *config.Config) error {
 		return errors.New("Not allowed to initialize a running server")
 	}
 
-	// Keep configuration in global scope
+	// keep configuration in global scope
 	conf = cfg
-
 	agentTTL, err := time.ParseDuration(cfg.AgentTTL)
 	if err != nil {
 		return err
 	}
 
-	// Init registry driver of etcd, and event stream
+	// init registry driver of etcd
 	etcdRequestTimeout := time.Duration(cfg.EtcdRequestTimeout) * time.Millisecond
 	etcdCfg := etcd.Config{
 		Endpoints: cfg.EtcdServers,
@@ -56,17 +53,23 @@ func Init(cfg *config.Config) error {
 	reg := registry.NewEtcdRegistry(kAPI, cfg.EtcdKeyPrefix, etcdRequestTimeout)
 	eStream := registry.NewEtcdEventStream(kAPI, cfg.EtcdKeyPrefix)
 
-	// Register all Ti-services to a map
-	SvcMgr = svc.RegisterServices(reg)
+	// check whether registry bootstrapped
+	if ok, err:= reg.IsBootstrapped(); err != nil {
+		log.Fatalf("Failed to check if bootstrapped in etcd, error: %v", err)
+	} else if !ok {
+		if err := reg.Bootstrap(); err != nil {
+			log.Fatalf("Bootstarp failed, error: %v", err)
+		}
+	}
 
-	// Init process manager for local processes
-	procMgr := process.NewProcessManager()
-	// Init machine
+	// local processes manager
+	procMgr := proc.NewProcessManager()
+	// init machine
 	mach := machine.NewMachine()
-	// Create agent
+	// create agent
 	ag := agent.New(reg, procMgr, mach, agentTTL)
 
-	// Reconciler drives the local process's state towards the desired state
+	// reconciler drives the local process's state towards the desired state
 	// stored in the Registry.
 	AgentRec = agent.NewReconciler(reg, eStream, ag)
 
@@ -79,8 +82,10 @@ func Run() (err error) {
 		err = errors.New("Server is already running, cannot call to run repeatly")
 		return
 	}
+
 	if conf.IsMock {
-		log.Warnf("Server is started in mock mode, skip to Run()")
+		log.Infof("Server is started in mock mode, skip to Run()")
+		switchStateToRunning()
 		return
 	}
 
