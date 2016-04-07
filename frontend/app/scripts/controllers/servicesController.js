@@ -9,27 +9,20 @@
 angular.module('tiAdminApp')
     .controller('ServicesController', ['$scope', '$http', '$timeout', '$modal', function($scope, $http, $timeout, $modal) {
 
-        var refreshServices = function() {
+        var refresh = function() {
             $http.get("http://localhost:8080/api/v1/services").then(function(resp) {
                 $scope.services = resp.data;
             });
-        };
-        refreshServices();
-
-        var refreshProcesses = function() {
             $http.get("http://localhost:8080/api/v1/processes").then(function(resp) {
                 $scope.processes = resp.data;
             });
-        };
-        refreshProcesses();
-
-        var refreshHosts = function() {
             $http.get("http://localhost:8080/api/v1/hosts").then(function(resp) {
                 $scope.hosts = resp.data;
             });
         };
-        refreshHosts();
+        refresh();
 
+        // new process dialog
         $scope.openNewProcessDialog = function() {
             var modalInstance = $modal.open({
                 animation: $scope.animationsEnabled,
@@ -49,11 +42,13 @@ angular.module('tiAdminApp')
 
                     $scope.ok = function() {
                         if ($scope.newProcData.serviceName && $scope.newProcData.machineID) {
+                            // create process
                             $http.post("http://localhost:8080/api/v1/processes", {
                                 svcName: $scope.newProcData.serviceName,
-                                machID: $scope.newProcData.machineID
-                            }).then(function(resp){
-                                console.log(resp);
+                                machID: $scope.newProcData.machineID,
+                                desiredState: "started"
+                            }).then(function(resp) {
+                                refresh();
                                 $modalInstance.close();
                             });
                         } else {
