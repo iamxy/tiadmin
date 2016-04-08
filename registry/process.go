@@ -354,7 +354,7 @@ func (r *EtcdRegistry) UpdateProcessDesiredState(procID string, state proc.Proce
 		return err
 	}
 	procKey := strings.Join([]string{status.ProcID, status.MachID, status.SvcName}, "-")
-	if _, err := r.kAPI.Set(r.ctx(), r.prefixed(processPrefix, procKey, "desired-state"), state, &etcd.SetOptions{
+	if _, err := r.kAPI.Set(r.ctx(), r.prefixed(processPrefix, procKey, "desired-state"), state.String(), &etcd.SetOptions{
 		PrevExist: etcd.PrevExist,
 	}); err != nil {
 		return err

@@ -471,9 +471,9 @@ func randInt(min int, max int) int {
 
 func (c *MockMonitorController) TiDBPerformanceMetrics() {
 	c.Data["json"] = schema.PerfMetrics{
-		Tps:  int32(randInt(20, 100)),
-		Qps:  int32(randInt(65, 300)),
-		Iops: int32(randInt(80, 550)),
+		Tps:   int32(randInt(20, 100)),
+		Qps:   int32(randInt(65, 300)),
+		Iops:  int32(randInt(80, 550)),
 		Conns: int32(randInt(3, 10)),
 	}
 	c.ServeJSON()

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pingcap/tiadmin/machine"
+	"github.com/pingcap/tiadmin/pkg"
 	proc "github.com/pingcap/tiadmin/process"
 	"time"
-"github.com/pingcap/tiadmin/pkg"
 )
 
 // Registry interface defined a set of operations to access a distributed key value store,
@@ -33,7 +33,7 @@ type Registry interface {
 	ProcessesOfService(svcName string) (map[string]*proc.ProcessStatus, error)
 	// Create new process instance of a specified service
 	CreateNewProcess(machID, svcName string, hostIP string, executor []string, command string, args []string,
-	env map[string]string, port pkg.Port, protocol pkg.Protocol) error
+		env map[string]string, port pkg.Port, protocol pkg.Protocol) error
 	// Destroy the process, normally the process should be in stopped state
 	DestroyProcess(procID string) (*proc.ProcessStatus, error)
 	// Update process desirede state in etcd
