@@ -77,7 +77,7 @@ func (ar *AgentReconciler) reconcile() error {
 	return nil
 }
 
-func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Mach, procMgr proc.ProcMgr) ([]string, error) {
+func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Machine, procMgr proc.ProcMgr) ([]string, error) {
 	// collect the procs which state changes and needed to be published to etcd
 	toPublish := make([]string, 0)
 	targetProcesses, err := reg.ProcessesOnMachine(mach.ID())

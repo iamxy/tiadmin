@@ -89,7 +89,42 @@ func machineStatusFromEtcdNode(machID string, node *etcd.Node) (*machine.Machine
 	return status, nil
 }
 
-func (r *EtcdRegistry) NewMachine(machID, hostName, hostRegion, hostIDC, publicIP string) error {
+func (r *EtcdRegistry) RegisterMachine(machID, hostName, hostRegion, hostIDC, publicIP string) error {
+	_, err := r.kAPI.Get(r.ctx(), r.prefixed(machinePrefix, machID), &etcd.GetOptions{
+		Quorum: true,
+	})
+	if err != nil {
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			// not found than create new machine node
+			return r.createMachine(machID, hostName, hostRegion, hostIDC, publicIP)
+		}
+		return err
+	}
+
+	// found it, update host infomation of the machine
+	object := &machine.MachineInfo{
+		HostName:   hostName,
+		HostRegion: hostRegion,
+		HostIDC:    hostIDC,
+		PublicIP:   publicIP,
+	}
+	if objstr, err := marshal(object); err == nil {
+		if _, err := r.kAPI.Set(r.ctx(), r.prefixed(machinePrefix, machID, "object"), objstr, &etcd.SetOptions{
+			PrevExist: etcd.PrevExist,
+		}); err != nil {
+			e := fmt.Sprintf("Failed to update MachInfo of machine node in etcd, %s, %v, %v", machID, object, err)
+			log.Error(e)
+			return errors.New(e)
+		}
+	} else {
+		e := fmt.Sprintf("Error marshaling MachineInfo, %v, %v", object, err)
+		log.Errorf(e)
+		return errors.New(e)
+	}
+	return nil
+}
+
+func (r *EtcdRegistry) createMachine(machID, hostName, hostRegion, hostIDC, publicIP string) error {
 	object := &machine.MachineInfo{
 		HostName:   hostName,
 		HostRegion: hostRegion,
@@ -135,7 +170,7 @@ func (r *EtcdRegistry) NewMachine(machID, hostName, hostRegion, hostIDC, publicI
 	return nil
 }
 
-func (r *EtcdRegistry) MachineHeartbeat(machID string, machStat *machine.MachineStat, ttl time.Duration) error {
+func (r *EtcdRegistry) RefreshMachine(machID string, machStat *machine.MachineStat, ttl time.Duration) error {
 	if statstr, err := marshal(machStat); err == nil {
 		if _, err := r.kAPI.Set(r.ctx(), r.prefixed(machinePrefix, machID, "statistic"), statstr, &etcd.SetOptions{
 			PrevExist: etcd.PrevExist,

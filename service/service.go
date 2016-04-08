@@ -16,7 +16,7 @@ func RegisterServciesFromEtcd(reg registry.Registry) {
 }
 
 type Service interface {
-	Status() (*ServiceStatus, error)
+	Status() *ServiceStatus
 }
 
 type service struct {
@@ -28,7 +28,7 @@ type service struct {
 	environments map[string]string
 }
 
-func (s *service) Status() (*ServiceStatus, error) {
+func (s *service) Status() *ServiceStatus {
 	return &ServiceStatus{
 		SvcName:      s.svcName,
 		Version:      s.version,
@@ -36,5 +36,5 @@ func (s *service) Status() (*ServiceStatus, error) {
 		Command:      s.command,
 		Args:         s.args,
 		Environments: s.environments,
-	}, nil
+	}
 }

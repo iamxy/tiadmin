@@ -26,6 +26,7 @@ var (
 
 	Agent      *agent.Agent
 	Reconciler *agent.AgentReconciler
+	Publisher  *agent.ProcessStatePublisher
 )
 
 func Init(cfg *config.Config) error {
@@ -66,7 +67,10 @@ func Init(cfg *config.Config) error {
 	procMgr := proc.NewProcessManager()
 
 	// init this machine
-	mach := machine.NewMachine()
+	mach, err := machine.NewMachineFromConfig(cfg)
+	if err != nil {
+		return err
+	}
 
 	// create agent
 	Agent = agent.New(reg, procMgr, mach, agentTTL)
@@ -74,6 +78,7 @@ func Init(cfg *config.Config) error {
 	// reconciler drives the local process's state towards the desired state
 	// stored in the Registry.
 	Reconciler = agent.NewReconciler(reg, eStream, Agent)
+	Publisher = agent.NewProcessStatePublisher(reg, Agent, agentTTL)
 
 	log.Infof("Server initialized successfully")
 	return nil
@@ -91,12 +96,15 @@ func Run(cfg *config.Config) (err error) {
 		return
 	}
 
-	// Birth Cry
+	if err := Agent.BirthCry(); err != nil {
+		log.Fatalf("Start server failed, %v", err)
+	}
 
 	stopc = make(chan struct{})
 	wg = sync.WaitGroup{}
 	components := []func(){
 		func() { Reconciler.Run(stopc) },
+		func() { Publisher.Run(stopc) },
 	}
 
 	for _, f := range components {

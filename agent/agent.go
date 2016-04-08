@@ -15,12 +15,12 @@ import (
 type Agent struct {
 	Reg       registry.Registry
 	ProcMgr   proc.ProcMgr
-	Mach      machine.Mach
+	Mach      machine.Machine
 	TTL       time.Duration
 	publishch chan []string
 }
 
-func New(reg registry.Registry, pm proc.ProcMgr, m machine.Mach, ttl time.Duration) *Agent {
+func New(reg registry.Registry, pm proc.ProcMgr, m machine.Machine, ttl time.Duration) *Agent {
 	return &Agent{
 		Reg:       reg,
 		ProcMgr:   pm,
@@ -65,10 +65,7 @@ func (a *Agent) StartNewProcess(status proc.ProcessStatus) error {
 	}
 
 	if svc, ok := service.Registered[svcName]; ok {
-		ss, err := svc.Status()
-		if err != nil {
-			return err
-		}
+		ss := svc.Status()
 		executor = ss.Executor
 		command = ss.Command
 		if len(status.RunInfo.Args) > 0 {
@@ -166,4 +163,14 @@ func (a *Agent) ListMachine(machID string) (res *machine.MachineStatus, err erro
 		log.Errorf("List specified machines infomation failed, %s, %v", machID, err)
 	}
 	return
+}
+
+func (a *Agent) BirthCry() error {
+	status := a.Mach.Status()
+	if err := a.Reg.RegisterMachine(status.MachID, status.MachInfo.HostName, status.MachInfo.HostRegion,
+		status.MachInfo.HostIDC, status.MachInfo.PublicIP); err != nil {
+		log.Errorf("Register machine status into etcd failed, %v", err)
+		return err
+	}
+	return nil
 }

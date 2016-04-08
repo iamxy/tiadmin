@@ -24,9 +24,9 @@ type Registry interface {
 	// return a map of machID to machineStatus
 	Machines() (map[string]*machine.MachineStatus, error)
 	// Create new machine node in etcd
-	NewMachine(machID, hostName, hostRegion, hostIDC, publicIP string) error
+	RegisterMachine(machID, hostName, hostRegion, hostIDC, publicIP string) error
 	// Update statistic info of machine and refresh the TTL of alive state in etcd
-	MachineHeartbeat(machID string, machStat *machine.MachineStat, ttl time.Duration) error
+	RefreshMachine(machID string, machStat *machine.MachineStat, ttl time.Duration) error
 	// Return the status of process with specified procID
 	Process(procID string) (*proc.ProcessStatus, error)
 	// Retrieve all processes in Ti-Cluster,

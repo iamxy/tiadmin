@@ -20,13 +20,13 @@ type ProcMgr interface {
 	FindBySvcName(string) map[string]Proc
 }
 
-type ProcessManager struct {
+type processManager struct {
 	procs   map[string]Proc
 	rwMutex sync.RWMutex
 }
 
 func NewProcessManager() ProcMgr {
-	return &ProcessManager{
+	return &processManager{
 		procs: make(map[string]Proc),
 	}
 }
@@ -40,7 +40,7 @@ func buildProcessMeta(target *ProcessStatus) map[string]string {
 	return meta
 }
 
-func (pm *ProcessManager) CreateProcess(target *ProcessStatus) (Proc, error) {
+func (pm *processManager) CreateProcess(target *ProcessStatus) (Proc, error) {
 	var pwd string
 	if root, err := pkg.GetRootDir(); err == nil {
 		pwd = root
@@ -68,7 +68,7 @@ func (pm *ProcessManager) CreateProcess(target *ProcessStatus) (Proc, error) {
 	}
 }
 
-func (pm *ProcessManager) DestroyProcess(procID string) (err error) {
+func (pm *processManager) DestroyProcess(procID string) (err error) {
 	pm.rwMutex.RLock()
 	proc, ok := pm.procs[procID]
 	pm.rwMutex.RUnlock()
@@ -89,7 +89,7 @@ func (pm *ProcessManager) DestroyProcess(procID string) (err error) {
 	return nil
 }
 
-func (pm *ProcessManager) StartProcess(procID string) error {
+func (pm *processManager) StartProcess(procID string) error {
 	pm.rwMutex.RLock()
 	proc, ok := pm.procs[procID]
 	pm.rwMutex.RUnlock()
@@ -107,7 +107,7 @@ func (pm *ProcessManager) StartProcess(procID string) error {
 	return nil
 }
 
-func (pm *ProcessManager) StopProcess(procID string) error {
+func (pm *processManager) StopProcess(procID string) error {
 	pm.rwMutex.RLock()
 	proc, ok := pm.procs[procID]
 	pm.rwMutex.RUnlock()
@@ -125,7 +125,7 @@ func (pm *ProcessManager) StopProcess(procID string) error {
 	return nil
 }
 
-func (pm *ProcessManager) AllProcess() map[string]Proc {
+func (pm *processManager) AllProcess() map[string]Proc {
 	res := make(map[string]Proc)
 	pm.rwMutex.RLock()
 	defer pm.rwMutex.RUnlock()
@@ -135,7 +135,7 @@ func (pm *ProcessManager) AllProcess() map[string]Proc {
 	return res
 }
 
-func (pm *ProcessManager) AllActiveProcess() map[string]Proc {
+func (pm *processManager) AllActiveProcess() map[string]Proc {
 	res := make(map[string]Proc)
 	pm.rwMutex.RLock()
 	defer pm.rwMutex.RUnlock()
@@ -147,13 +147,13 @@ func (pm *ProcessManager) AllActiveProcess() map[string]Proc {
 	return res
 }
 
-func (pm *ProcessManager) TotalProcess() int {
+func (pm *processManager) TotalProcess() int {
 	pm.rwMutex.RLock()
 	defer pm.rwMutex.RUnlock()
 	return len(pm.procs)
 }
 
-func (pm *ProcessManager) TotalActiveProcess() int {
+func (pm *processManager) TotalActiveProcess() int {
 	res := 0
 	pm.rwMutex.RLock()
 	defer pm.rwMutex.RUnlock()
@@ -165,7 +165,7 @@ func (pm *ProcessManager) TotalActiveProcess() int {
 	return res
 }
 
-func (pm *ProcessManager) FindByProcID(procID string) Proc {
+func (pm *processManager) FindByProcID(procID string) Proc {
 	pm.rwMutex.RLock()
 	defer pm.rwMutex.RUnlock()
 	if proc, ok := pm.procs[procID]; ok {
@@ -175,7 +175,7 @@ func (pm *ProcessManager) FindByProcID(procID string) Proc {
 	}
 }
 
-func (pm *ProcessManager) FindBySvcName(svcName string) map[string]Proc {
+func (pm *processManager) FindBySvcName(svcName string) map[string]Proc {
 	res := make(map[string]Proc)
 	pm.rwMutex.RLock()
 	defer pm.rwMutex.RUnlock()
