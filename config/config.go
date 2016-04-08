@@ -5,7 +5,6 @@ import (
 	"flag"
 	"github.com/ngaut/log"
 	"github.com/pingcap/tiadmin/pkg"
-	"github.com/pingcap/tiadmin/registry"
 	"github.com/rakyll/globalconf"
 	"os"
 	"path"
@@ -20,6 +19,7 @@ const (
 	// First try to load configuration file in $(PWD), if not exist then check /etc/tiadm/tiadm.conf
 	DefaultConfigFile = "tiadm.conf"
 	DefaultConfigDir  = "/etc/tiadm"
+	DefaultKeyPrefix  = "/_pingcap.com/tiadmin"
 )
 
 type Config struct {
@@ -38,7 +38,7 @@ type Config struct {
 
 func ParseFlag() (*Config, error) {
 	etcdServers := flag.String("etcd_servers", "http://127.0.0.1:2379,http://127.0.0.1:4001", "List of etcd endpoints")
-	etcdKeyPrefix := flag.String("etcd_key_prefix", registry.DefaultKeyPrefix, "Namespace for tiadmin registry in etcd")
+	etcdKeyPrefix := flag.String("etcd_key_prefix", DefaultKeyPrefix, "Namespace for tiadmin registry in etcd")
 	etcdRequestTimeout := flag.Int("etcd_request_timeout", 1000, "Amount of time in milliseconds to allow a single etcd request before considering it failed.")
 	monitorLoopInterval := flag.Int("monitor_loop_interval", 2000, "Interval at which the monitor should check and report the cluster status in etcd periodically.")
 	hostIP := flag.String("host_ip", "", "IP address that this host should publish")

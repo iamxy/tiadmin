@@ -282,7 +282,7 @@ func (r *EtcdRegistry) UpdateProcessState(procID, machID, svcName string, state 
 	return
 }
 
-func (r *EtcdRegistry) NewProcess(machID, svcName string, hostIP, hostName, hostRegion, hostDatacenter string,
+func (r *EtcdRegistry) NewProcess(machID, svcName string, hostIP, hostName, hostRegion, hostIDC string,
 	executor []string, command string, args []string, env map[string]string, port pkg.Port, protocol pkg.Protocol) error {
 	// generate new process ID
 	procID, err := r.generateProcID()
@@ -295,16 +295,16 @@ func (r *EtcdRegistry) NewProcess(machID, svcName string, hostIP, hostName, host
 	desiredState := proc.StateStarted
 	currentState := proc.StateStopped
 	object := &proc.ProcessRunInfo{
-		HostIP:         hostIP,
-		HostName:       hostName,
-		HostRegion:     hostRegion,
-		HostDatacenter: hostDatacenter,
-		Executor:       executor,
-		Command:        command,
-		Args:           args,
-		Environment:    env,
-		Port:           port,
-		Protocol:       protocol,
+		HostIP:      hostIP,
+		HostName:    hostName,
+		HostRegion:  hostRegion,
+		HostIDC:     hostIDC,
+		Executor:    executor,
+		Command:     command,
+		Args:        args,
+		Environment: env,
+		Port:        port,
+		Protocol:    protocol,
 	}
 	if err := r.mustCreateNode(r.prefixed(processPrefix, procKey), "", true); err != nil {
 		e := fmt.Sprintf("Failed to create node of process, %s, %v", procKey, err)

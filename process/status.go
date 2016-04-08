@@ -16,14 +16,14 @@ type ProcessStatus struct {
 }
 
 type ProcessRunInfo struct {
-	HostIP         string
-	HostName       string
-	HostRegion     string
-	HostDatacenter string
-	Executor       []string
-	Command        string
-	Args           []string
-	Environment    map[string]string
-	Port           pkg.Port
-	Protocol       pkg.Protocol
+	HostIP      string
+	HostName    string
+	HostRegion  string
+	HostIDC     string
+	Executor    []string
+	Command     string
+	Args        []string
+	Environment map[string]string
+	Port        pkg.Port
+	Protocol    pkg.Protocol
 }

@@ -1,26 +1,40 @@
 package service
 
 import (
-	"github.com/pingcap/tiadmin/pkg"
-	proc "github.com/pingcap/tiadmin/process"
-	"github.com/pingcap/tiadmin/registry"
+	"github.com/coreos/fleet/registry"
 )
 
-type Service interface {
-	UpdateConfig() error
-	Status() (ServiceStatus, error)
-	Endpoints() ([]pkg.Endpoint, error)
-	RunUpProcess(args ...string) (proc.ProcessStatus, error)
-	KillProcess(procID string) error
-	TriggerStartProcess(procID string) error
-	TriggerStopProcess(procID string) error
-	ListProcess() ([]proc.ProcessStatus, error)
+var Registered map[string]Service
+
+func RegisterServices() {
+	Registered = make(map[string]Service)
+	Registered[TiDB_SERVICE] = NewTiDB()
 }
 
-type ServiceManager map[string]Service
+func RegisterServciesFromEtcd(reg registry.Registry) {
+	// TODO: implement it
+}
 
-func RegisterServices(reg registry.Registry) ServiceManager {
-	svcMgr := make(ServiceManager)
-	svcMgr["tidb"] = NewTiDBService(reg)
-	return svcMgr
+type Service interface {
+	Status() (*ServiceStatus, error)
+}
+
+type service struct {
+	svcName      string
+	version      string
+	executor     []string
+	command      string
+	args         []string
+	environments map[string]string
+}
+
+func (s *service) Status() (*ServiceStatus, error) {
+	return &ServiceStatus{
+		SvcName:      s.svcName,
+		Version:      s.version,
+		Executor:     s.executor,
+		Command:      s.command,
+		Args:         s.args,
+		Environments: s.environments,
+	}, nil
 }

@@ -29,7 +29,7 @@ func main() {
 	}
 
 	// Start tiadmin server as daemon
-	if err := server.Run(); err != nil {
+	if err := server.Run(cfg); err != nil {
 		log.Fatalf("Failed to run tiadmin server, %v", err)
 	}
 
@@ -47,23 +47,23 @@ func main() {
 		log.Infof("Restarting server now")
 		server.Kill()
 		server.Purge()
+
 		// reload configuration file
 		cfg, err := config.ParseFlag()
 		if err != nil {
 			log.Fatalf("Parsing configuration flags failed: %v", err)
 		}
-
 		if err := server.Init(cfg); err != nil {
 			log.Fatalf("Failed to initializing tiadmin server from configuration, %v", err)
 		}
-		if err := server.Run(); err != nil {
+		if err := server.Run(cfg); err != nil {
 			log.Fatalf("Failed to run tiadmin server, %v", err)
 		}
 	}
 
 	dumpStatus := func() {
 		log.Infof("start dumping server status")
-		status, err := server.Dump()
+		status, err := server.Dump(cfg)
 		if err != nil {
 			log.Errorf("Failed to dump server status: %v", err)
 			return

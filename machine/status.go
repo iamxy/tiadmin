@@ -8,10 +8,10 @@ type MachineStatus struct {
 }
 
 type MachineInfo struct {
-	HostName       string
-	HostRegion     string
-	HostDatacenter string
-	PublicIP       string
+	HostName   string
+	HostRegion string
+	HostIDC    string
+	PublicIP   string
 }
 
 type MachineStat struct {

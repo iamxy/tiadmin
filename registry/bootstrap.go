@@ -3,11 +3,17 @@ package registry
 import (
 	etcd "github.com/coreos/etcd/client"
 	"github.com/ngaut/log"
+	"github.com/pingcap/tiadmin/config"
 )
 
 const bootstrapPrefix = "bootstrapped"
 
-func (r *EtcdRegistry) IsBootstrapped() bool {
+func (r *EtcdRegistry) IsBootstrapped(cfg *config.Config) bool {
+	// don't need bootstrap in mock mode
+	if cfg.IsMock {
+		return true
+	}
+
 	key := r.prefixed(bootstrapPrefix)
 	opts := &etcd.GetOptions{
 		Quorum: true,

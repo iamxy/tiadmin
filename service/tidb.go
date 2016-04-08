@@ -1,41 +1,22 @@
 package service
 
-import (
-	"github.com/pingcap/tiadmin/pkg"
-	proc "github.com/pingcap/tiadmin/process"
-	"github.com/pingcap/tiadmin/registry"
-)
+import ()
+
+const TiDB_SERVICE = "TiDB"
 
 type TiDBService struct {
+	service
 }
 
-func NewTiDBService(reg registry.Registry) Service {
-	return &TiDBService{}
-}
-
-func (s *TiDBService) UpdateConfig() error {
-	return nil
-}
-func (s *TiDBService) Status() (ServiceStatus, error) {
-	var status ServiceStatus
-	return status, nil
-}
-func (s *TiDBService) Endpoints() ([]pkg.Endpoint, error) {
-	return nil, nil
-}
-func (s *TiDBService) RunUpProcess(args ...string) (proc.ProcessStatus, error) {
-	var status proc.ProcessStatus
-	return status, nil
-}
-func (s *TiDBService) KillProcess(procID string) error {
-	return nil
-}
-func (s *TiDBService) TriggerStartProcess(procID string) error {
-	return nil
-}
-func (s *TiDBService) TriggerStopProcess(procID string) error {
-	return nil
-}
-func (s *TiDBService) ListProcess() ([]proc.ProcessStatus, error) {
-	return nil, nil
+func NewTiDB() Service {
+	return &TiDBService{
+		service{
+			svcName:      TiDB_SERVICE,
+			version:      "1.0.0",
+			executor:     []string{},
+			command:      "bin/tidb_server",
+			args:         []string{"-L", "info", "-path", "/tmp/tidb", "-P", "4000"},
+			environments: map[string]string{},
+		},
+	}
 }

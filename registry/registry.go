@@ -3,6 +3,7 @@ package registry
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pingcap/tiadmin/config"
 	"github.com/pingcap/tiadmin/machine"
 	"github.com/pingcap/tiadmin/pkg"
 	proc "github.com/pingcap/tiadmin/process"
@@ -14,7 +15,7 @@ import (
 // now we implemented a registry driving ETCD as backend
 type Registry interface {
 	// Check whether tiadmin registry is bootstrapped normally
-	IsBootstrapped() bool
+	IsBootstrapped(*config.Config) bool
 	// Initialize the basic directory structure of tiadmin registry
 	Bootstrap() error
 	// Get Infomation of machine in cluster by the given machID
@@ -23,7 +24,7 @@ type Registry interface {
 	// return a map of machID to machineStatus
 	Machines() (map[string]*machine.MachineStatus, error)
 	// Create new machine node in etcd
-	NewMachine(machID, hostName, hostRegion, hostDatacenter, publicIP string) error
+	NewMachine(machID, hostName, hostRegion, hostIDC, publicIP string) error
 	// Update statistic info of machine and refresh the TTL of alive state in etcd
 	MachineHeartbeat(machID string, machStat *machine.MachineStat, ttl time.Duration) error
 	// Return the status of process with specified procID
@@ -39,7 +40,7 @@ type Registry interface {
 	// return a map of procID to status infomation of process
 	ProcessesOfService(svcName string) (map[string]*proc.ProcessStatus, error)
 	// Create new process node of specified service in etcd
-	NewProcess(machID, svcName string, hostIP, hostName, hostRegion, hostDatacenter string,
+	NewProcess(machID, svcName string, hostIP, hostName, hostRegion, hostIDC string,
 		executor []string, command string, args []string, env map[string]string, port pkg.Port, protocol pkg.Protocol) error
 	// Destroy the process, normally the process should be in stopped state
 	DeleteProcess(procID string) (*proc.ProcessStatus, error)

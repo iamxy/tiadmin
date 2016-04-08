@@ -89,12 +89,12 @@ func machineStatusFromEtcdNode(machID string, node *etcd.Node) (*machine.Machine
 	return status, nil
 }
 
-func (r *EtcdRegistry) NewMachine(machID, hostName, hostRegion, hostDatacenter, publicIP string) error {
+func (r *EtcdRegistry) NewMachine(machID, hostName, hostRegion, hostIDC, publicIP string) error {
 	object := &machine.MachineInfo{
-		HostName:       hostName,
-		HostRegion:     hostRegion,
-		HostDatacenter: hostDatacenter,
-		PublicIP:       publicIP,
+		HostName:   hostName,
+		HostRegion: hostRegion,
+		HostIDC:    hostIDC,
+		PublicIP:   publicIP,
 	}
 	statobj := &machine.MachineStat{
 		UsageOfCPU:  0,

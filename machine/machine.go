@@ -11,13 +11,12 @@ type Mach interface {
 }
 
 type Machine struct {
-	MachID         string
-	HostName       string
-	HostRegion     string
-	HostDatacenter string
-	PublicIP       string
-	IsAlive        bool
-	Stat           MachineStat
+	MachID     string
+	HostName   string
+	HostRegion string
+	HostIDC    string
+	PublicIP   string
+	Stat       MachineStat
 }
 
 func NewMachine() Mach {

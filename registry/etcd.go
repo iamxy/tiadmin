@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-const DefaultKeyPrefix = "/_pingcap.com/tiadmin"
 const maxProcessID = "max-process-id"
 
 // EtcdRegistry implement the Registry interface and uses etcd as backend

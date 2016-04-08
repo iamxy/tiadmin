@@ -10,6 +10,7 @@ import (
 	"github.com/pingcap/tiadmin/machine"
 	proc "github.com/pingcap/tiadmin/process"
 	"github.com/pingcap/tiadmin/registry"
+	svc "github.com/pingcap/tiadmin/service"
 	"sync"
 	"time"
 )
@@ -22,7 +23,6 @@ var (
 	stopc   chan struct{}  // used to terminate all other goroutines
 	wg      sync.WaitGroup // used to co-ordinate shutdown
 	running bool           = false
-	conf    *config.Config
 
 	Agent      *agent.Agent
 	Reconciler *agent.AgentReconciler
@@ -33,8 +33,6 @@ func Init(cfg *config.Config) error {
 		return errors.New("Not allowed to initialize a running server")
 	}
 
-	// keep configuration in global scope
-	conf = cfg
 	agentTTL, err := time.ParseDuration(cfg.AgentTTL)
 	if err != nil {
 		return err
@@ -55,18 +53,21 @@ func Init(cfg *config.Config) error {
 	eStream := registry.NewEtcdEventStream(kAPI, cfg.EtcdKeyPrefix)
 
 	// check whether or not the registry is bootstrapped
-	if !conf.IsMock {
-		if ok := reg.IsBootstrapped(); !ok {
-			if err := reg.Bootstrap(); err != nil {
-				log.Fatalf("Bootstarp failed, error: %v", err)
-			}
+	if ok := reg.IsBootstrapped(cfg); !ok {
+		if err := reg.Bootstrap(); err != nil {
+			log.Fatalf("Bootstarp failed, error: %v", err)
 		}
 	}
 
-	// local processes manager
+	// register services in cluster
+	svc.RegisterServices()
+
+	// init local processes manager
 	procMgr := proc.NewProcessManager()
-	// init machine
+
+	// init this machine
 	mach := machine.NewMachine()
+
 	// create agent
 	Agent = agent.New(reg, procMgr, mach, agentTTL)
 
@@ -78,13 +79,13 @@ func Init(cfg *config.Config) error {
 	return nil
 }
 
-func Run() (err error) {
+func Run(cfg *config.Config) (err error) {
 	if IsRunning() {
 		err = errors.New("Server is already running, cannot call to run repeatly")
 		return
 	}
 
-	if conf.IsMock {
+	if cfg.IsMock {
 		log.Infof("Server is started in mock mode, skip to Run()")
 		switchStateToRunning()
 		return
@@ -139,9 +140,9 @@ func Kill() (err error) {
 func Purge() {
 }
 
-func Dump() (dumpinfo []byte, err error) {
+func Dump(cfg *config.Config) (dumpinfo []byte, err error) {
 	err = nil
-	dumpinfo = []byte(fmt.Sprintf("%v", conf))
+	dumpinfo = []byte(fmt.Sprintf("%v", cfg))
 	log.Infof("Finished dumping server status")
 	return
 }

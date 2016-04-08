@@ -36,7 +36,7 @@ func buildProcessMeta(target *ProcessStatus) map[string]string {
 	meta["HOST_NAME"] = target.RunInfo.HostName
 	meta["HOST_IP"] = target.RunInfo.HostIP
 	meta["HOST_REGION"] = target.RunInfo.HostRegion
-	meta["HOST_DATACENTER"] = target.RunInfo.HostDatacenter
+	meta["HOST_IDC"] = target.RunInfo.HostIDC
 	return meta
 }
 
