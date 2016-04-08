@@ -30,7 +30,7 @@ func (h *AgentHeartbeat) Run(stopc <-chan struct{}) {
 			log.Debug("AgentHeartbeat is exiting due to stop signal")
 			return
 		case <-h.clock.After(h.ttl / 2):
-			log.Debug("Trigger heartbeat after tick")
+			log.Debug("Trigger Heartbeat after tick")
 			if err := h.heartBeat(); err != nil {
 				log.Errorf("Heartbeat refresh state to etcd failed, %v", err)
 			}
@@ -40,7 +40,6 @@ func (h *AgentHeartbeat) Run(stopc <-chan struct{}) {
 
 func (h *AgentHeartbeat) heartBeat() error {
 	if err := h.reg.RefreshMachine(h.agent.Mach.ID(), h.agent.Mach.Status().MachStat, h.ttl); err != nil {
-		log.Errorf("Refresh machine state in ectd meet error, %v", err)
 		return err
 	}
 	return nil

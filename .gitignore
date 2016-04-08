@@ -29,5 +29,6 @@ _testmain.go
 
 /tiadm/tiadm
 /tiadm/*.tmp
+/tiadm/.machineID
 /tiadm/routers
 /tiadmctl/tiadmctl

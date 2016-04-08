@@ -201,8 +201,9 @@ func (r *EtcdRegistry) RefreshMachine(machID string, machStat machine.MachineSta
 			}); err != nil {
 				return err
 			}
+		} else {
+			return err
 		}
-		return err
 	}
 	return nil
 }

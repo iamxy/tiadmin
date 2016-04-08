@@ -22,6 +22,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Parsing configuration flags failed: %v", err)
 	}
+	log.Debugf("Load configuration successfully, %v", cfg)
 
 	// Initialize server
 	if err := server.Init(cfg); err != nil {

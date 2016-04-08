@@ -12,7 +12,7 @@ import (
 
 const (
 	// TTL to use with all state pushed to Registry
-	DefaultTTL = "30s"
+	DefaultTTL = "10s"
 	// If an environment variable with the EnvPrefix is set, it will take precedence over values
 	// in the configuration file. Command line flags will override the environment variables.
 	EnvConfigPrefix = "TIADM_"
@@ -26,7 +26,7 @@ type Config struct {
 	EtcdServers         []string
 	EtcdKeyPrefix       string
 	EtcdRequestTimeout  int
-	MonitorLoopInterval int
+	MonitorInterval int
 	HostIP              string
 	HostName            string
 	HostRegion          string
@@ -40,7 +40,7 @@ func ParseFlag() (*Config, error) {
 	etcdServers := flag.String("etcd_servers", "http://127.0.0.1:2379,http://127.0.0.1:4001", "List of etcd endpoints")
 	etcdKeyPrefix := flag.String("etcd_key_prefix", DefaultKeyPrefix, "Namespace for tiadmin registry in etcd")
 	etcdRequestTimeout := flag.Int("etcd_request_timeout", 1000, "Amount of time in milliseconds to allow a single etcd request before considering it failed.")
-	monitorLoopInterval := flag.Int("monitor_loop_interval", 2000, "Interval at which the monitor should check and report the cluster status in etcd periodically.")
+	monitorInterval := flag.Int("monitor_interval", 2000, "Interval at which the monitor should check and report the cluster status in etcd periodically.")
 	hostIP := flag.String("host_ip", "", "IP address that this host should publish")
 	hostName := flag.String("host_name", "", "The identifier of this machine in cluster")
 	hostRegion := flag.String("host_region", "", "Geographical region where this machine located")
@@ -66,7 +66,7 @@ func ParseFlag() (*Config, error) {
 		EtcdServers:         etcdEndpoints,
 		EtcdKeyPrefix:       *etcdKeyPrefix,
 		EtcdRequestTimeout:  *etcdRequestTimeout,
-		MonitorLoopInterval: *monitorLoopInterval,
+		MonitorInterval: *monitorInterval,
 		HostIP:              *hostIP,
 		HostName:            *hostName,
 		HostRegion:          *hostRegion,
