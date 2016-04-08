@@ -336,10 +336,28 @@ func (r *EtcdRegistry) CreateNewProcess(machID, svcName string, hostIP string, e
 	return nil
 }
 
-func (r *EtcdRegistry) DestroyProcess(procID, machId, svcName string) (*proc.ProcessStatus, error) {
-	return nil, nil
+func (r *EtcdRegistry) DestroyProcess(procID string) (*proc.ProcessStatus, error) {
+	status, err := r.Process(procID)
+	if err != nil {
+		return nil, err
+	}
+	procKey := strings.Join([]string{status.ProcID, status.MachID, status.SvcName}, "-")
+	if err := r.deleteNode(r.prefixed(processPrefix, procKey), true); err != nil {
+		return nil, err
+	}
+	return status, nil
 }
 
-func (r *EtcdRegistry) UpdateProcessDesiredState(procID, machID, svcName string, state proc.ProcessState) error {
+func (r *EtcdRegistry) UpdateProcessDesiredState(procID string, state proc.ProcessState) error {
+	status, err := r.Process(procID)
+	if err != nil {
+		return err
+	}
+	procKey := strings.Join([]string{status.ProcID, status.MachID, status.SvcName}, "-")
+	if _, err := r.kAPI.Set(r.ctx(), r.prefixed(processPrefix, procKey, "desired-state"), state, &etcd.SetOptions{
+		PrevExist: etcd.PrevExist,
+	}); err != nil {
+		return err
+	}
 	return nil
 }

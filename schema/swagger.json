@@ -830,6 +830,10 @@
         "iops": {
           "type": "integer",
           "format": "int32"
+        },
+        "conns": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

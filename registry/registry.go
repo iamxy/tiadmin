@@ -35,9 +35,9 @@ type Registry interface {
 	CreateNewProcess(machID, svcName string, hostIP string, executor []string, command string, args []string,
 	env map[string]string, port pkg.Port, protocol pkg.Protocol) error
 	// Destroy the process, normally the process should be in stopped state
-	DestroyProcess(procID, machId, svcName string) (*proc.ProcessStatus, error)
+	DestroyProcess(procID string) (*proc.ProcessStatus, error)
 	// Update process desirede state in etcd
-	UpdateProcessDesiredState(procID, machID, svcName string, state proc.ProcessState) error
+	UpdateProcessDesiredState(procID string, state proc.ProcessState) error
 	// Update process current state in etcd, notice that isAlive is real run state of the local process
 	UpdateProcessState(procID, machID, svcName string, state proc.ProcessState, isAlive bool, ttl time.Duration) error
 }
