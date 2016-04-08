@@ -1,16 +1,20 @@
 package machine
 
 type MachineStatus struct {
-	MachID         string
+	MachID   string
+	IsAlive  bool
+	MachInfo MachineInfo
+	MachStat MachineStat
+}
+
+type MachineInfo struct {
 	HostName       string
 	HostRegion     string
 	HostDatacenter string
 	PublicIP       string
-	IsAlive        bool
-	metrics        MachineMetrics
 }
 
-type MachineMetrics struct {
+type MachineStat struct {
 	UsageOfCPU  int32
 	TotalMem    int32
 	UsedMem     int32

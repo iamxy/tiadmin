@@ -19,11 +19,18 @@ type Registry interface {
 	Bootstrap() error
 	// Get Infomation of machine in cluster by the given machID
 	Machine(machID string) (*machine.MachineStatus, error)
+	// Retrieve all machines in Ti-Cluster,
+	// return a map of machID to machineStatus
+	Machines() (map[string]*machine.MachineStatus, error)
+	// Create new machine node in etcd
+	NewMachine(machID, hostName, hostRegion, hostDatacenter, publicIP string) error
+	// Update statistic info of machine and refresh the TTL of alive state in etcd
+	MachineHeartbeat(machID string, machStat *machine.MachineStat, ttl time.Duration) error
 	// Return the status of process with specified procID
 	Process(procID string) (*proc.ProcessStatus, error)
 	// Retrieve all processes in Ti-Cluster,
 	// with either running or stopped state
-	// return a map of procID to status info of process
+	// return a map of procID to processStatus
 	Processes() (map[string]*proc.ProcessStatus, error)
 	// Retrieve processes which scheduled at the specified host by given machID
 	// return a map of procID to status infomation of process
@@ -31,11 +38,11 @@ type Registry interface {
 	// Retrieve all processes instantiated from the specified service
 	// return a map of procID to status infomation of process
 	ProcessesOfService(svcName string) (map[string]*proc.ProcessStatus, error)
-	// Create new process instance of a specified service
-	CreateNewProcess(machID, svcName string, hostIP string, executor []string, command string, args []string,
-		env map[string]string, port pkg.Port, protocol pkg.Protocol) error
+	// Create new process node of specified service in etcd
+	NewProcess(machID, svcName string, hostIP, hostName, hostRegion, hostDatacenter string,
+		executor []string, command string, args []string, env map[string]string, port pkg.Port, protocol pkg.Protocol) error
 	// Destroy the process, normally the process should be in stopped state
-	DestroyProcess(procID string) (*proc.ProcessStatus, error)
+	DeleteProcess(procID string) (*proc.ProcessStatus, error)
 	// Update process desirede state in etcd
 	UpdateProcessDesiredState(procID string, state proc.ProcessState) error
 	// Update process current state in etcd, notice that isAlive is real run state of the local process

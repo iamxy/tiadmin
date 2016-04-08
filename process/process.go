@@ -315,6 +315,12 @@ func (p *Process) NewProcessRun() ProcRun {
 	for k, v := range p.Environment {
 		vars[k] = v
 	}
+	for k, v := range p.Metadata {
+		vars[k] = v
+	}
+
+	// TODO: find all endpoints of services and put into vars here
+
 	c := make([]string, 0)
 	if len(p.Executor) > 0 {
 		c = append(c, p.Executor...)

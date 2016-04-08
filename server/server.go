@@ -24,7 +24,8 @@ var (
 	running bool           = false
 	conf    *config.Config
 
-	AgentRec *agent.AgentReconciler
+	Agent      *agent.Agent
+	Reconciler *agent.AgentReconciler
 )
 
 func Init(cfg *config.Config) error {
@@ -67,11 +68,11 @@ func Init(cfg *config.Config) error {
 	// init machine
 	mach := machine.NewMachine()
 	// create agent
-	ag := agent.New(reg, procMgr, mach, agentTTL)
+	Agent = agent.New(reg, procMgr, mach, agentTTL)
 
 	// reconciler drives the local process's state towards the desired state
 	// stored in the Registry.
-	AgentRec = agent.NewReconciler(reg, eStream, ag)
+	Reconciler = agent.NewReconciler(reg, eStream, Agent)
 
 	log.Infof("Server initialized successfully")
 	return nil
@@ -94,7 +95,7 @@ func Run() (err error) {
 	stopc = make(chan struct{})
 	wg = sync.WaitGroup{}
 	components := []func(){
-		func() { AgentRec.Run(stopc) },
+		func() { Reconciler.Run(stopc) },
 	}
 
 	for _, f := range components {

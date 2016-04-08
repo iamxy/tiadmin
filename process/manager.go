@@ -31,18 +31,27 @@ func NewProcessManager() ProcMgr {
 	}
 }
 
+func buildProcessMeta(target *ProcessStatus) map[string]string {
+	meta := make(map[string]string)
+	meta["HOST_NAME"] = target.RunInfo.HostName
+	meta["HOST_IP"] = target.RunInfo.HostIP
+	meta["HOST_REGION"] = target.RunInfo.HostRegion
+	meta["HOST_DATACENTER"] = target.RunInfo.HostDatacenter
+	return meta
+}
+
 func (pm *ProcessManager) CreateProcess(target *ProcessStatus) (Proc, error) {
-	metadata := make(map[string]string) // reserve
 	var pwd string
-	if root, err := pkg.GetRootDir(); err != nil {
+	if root, err := pkg.GetRootDir(); err == nil {
+		pwd = root
+	} else {
 		log.Errorf("GetRootDir failed, error: %v", err)
 		return nil, err
-	} else {
-		pwd = root
 	}
+	meta := buildProcessMeta(target)
 
 	if proc, err := NewProcess(target.ProcID, target.SvcName, target.RunInfo.Executor, target.RunInfo.Command,
-		target.RunInfo.Args, "", "", target.RunInfo.Environment, metadata, pwd); err == nil {
+		target.RunInfo.Args, "", "", target.RunInfo.Environment, meta, pwd); err == nil {
 		if target.DesiredState == StateStarted {
 			if err := proc.Start(); err != nil {
 				log.Errorf("Failed to start local process, procID: %s, error: %v", target.ProcID, err)

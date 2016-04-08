@@ -34,3 +34,13 @@ func (a *Agent) Subscribe(procIDs []string) {
 func (a *Agent) Publish() chan []string {
 	return a.publishch
 }
+
+func (a *Agent) StartNewProcess(status proc.ProcessStatus) error {
+	//machID := status.MachID
+	//svcName := status.SvcName
+	//if mach, err := a.Reg.Machine(machID); err == nil {
+	//} else {
+	//}
+	//a.Reg.NewProcess(machID, svcName)
+	return nil
+}

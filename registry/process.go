@@ -23,13 +23,13 @@ func (r *EtcdRegistry) Processes() (map[string]*proc.ProcessStatus, error) {
 	resp, err := r.kAPI.Get(r.ctx(), key, opts)
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
-			e := errors.New(fmt.Sprintf("Node[%s] not found in etcd, Ti-Cluster may not be properly bootstrapped", key))
+			e := errors.New(fmt.Sprintf("%s not found in etcd, cluster may not be properly bootstrapped", key))
 			return nil, e
 		}
 		return nil, err
 	}
 
-	procIDToProcess := make(map[string]*proc.ProcessStatus)
+	IDToProcess := make(map[string]*proc.ProcessStatus)
 	for _, node := range resp.Node.Nodes {
 		key := path.Base(node.Key)
 		parts := strings.Split(key, "-")
@@ -45,9 +45,9 @@ func (r *EtcdRegistry) Processes() (map[string]*proc.ProcessStatus, error) {
 			e := errors.New(fmt.Sprintf("Invalid process node, key[%s], error[%v]", node.Key, err))
 			return nil, e
 		}
-		procIDToProcess[procID] = status
+		IDToProcess[procID] = status
 	}
-	return procIDToProcess, nil
+	return IDToProcess, nil
 }
 
 func (r *EtcdRegistry) Process(procID string) (*proc.ProcessStatus, error) {
@@ -185,14 +185,14 @@ func processStatusFromEtcdNode(procID, machID, svcName string, node *etcd.Node) 
 		switch key {
 		case "desired-state":
 			if state, err := parseProcessState(n.Value); err != nil {
-				log.Errorf("error parsing process state, procID: %s, %v", procID, err)
+				log.Errorf("Error parsing process state, procID: %s, %v", procID, err)
 				return nil, err
 			} else {
 				status.DesiredState = state
 			}
 		case "current-state":
 			if state, err := parseProcessState(n.Value); err != nil {
-				log.Errorf("error parsing process state, procID: %s, %v", procID, err)
+				log.Errorf("Error parsing process state, procID: %s, %v", procID, err)
 				return nil, err
 			} else {
 				status.CurrentState = state
@@ -201,7 +201,7 @@ func processStatusFromEtcdNode(procID, machID, svcName string, node *etcd.Node) 
 			status.IsAlive = true
 		case "object":
 			if err := unmarshal(n.Value, &status.RunInfo); err != nil {
-				log.Errorf("error unmarshaling RunInfo, procID: %s, %v", procID, err)
+				log.Errorf("Error unmarshaling RunInfo, procID: %s, %v", procID, err)
 				return nil, err
 			}
 		case "endpoints":
@@ -211,7 +211,7 @@ func processStatusFromEtcdNode(procID, machID, svcName string, node *etcd.Node) 
 					if endpoint, err := pkg.ParseEndpoint(str); err == nil {
 						status.Endpoints = append(status.Endpoints, endpoint)
 					} else {
-						log.Errorf("error parsing endpoint, procID: %s, %v", procID, err)
+						log.Errorf("Error parsing endpoint, procID: %s, %v", procID, err)
 						return nil, err
 					}
 				}
@@ -247,9 +247,11 @@ func (r *EtcdRegistry) UpdateProcessState(procID, machID, svcName string, state 
 		PrevExist: etcd.PrevExist,
 	})
 	if err != nil {
-		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) || isEtcdError(err, etcd.ErrorCodePrevValueRequired) {
-			// state not changed or process was destroyed
-			log.Warnf("Something unexpected while updating process state of procID: %s, error: %v", err)
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			// maybe process was destroyed
+			log.Warnf("Error updating process state of procID: %s, process node is gone, error: %v", procID, err)
+		} else if isEtcdError(err, etcd.ErrorCodePrevValueRequired) {
+			log.Debugf("State of process not changed in etcd, procID: %s, state: %s", procID, state.String())
 		} else {
 			// with other errors
 			return
@@ -274,14 +276,14 @@ func (r *EtcdRegistry) UpdateProcessState(procID, machID, svcName string, state 
 			}
 		}
 	} else {
-		// delete the alive node of process
-		_, err = r.kAPI.Delete(r.ctx(), aliveKey, &etcd.DeleteOptions{})
+		// delete the alive state of process immediately
+		r.kAPI.Delete(r.ctx(), aliveKey, &etcd.DeleteOptions{})
 	}
 	return
 }
 
-func (r *EtcdRegistry) CreateNewProcess(machID, svcName string, hostIP string, executor []string,
-	command string, args []string, env map[string]string, port pkg.Port, protocol pkg.Protocol) error {
+func (r *EtcdRegistry) NewProcess(machID, svcName string, hostIP, hostName, hostRegion, hostDatacenter string,
+	executor []string, command string, args []string, env map[string]string, port pkg.Port, protocol pkg.Protocol) error {
 	// generate new process ID
 	procID, err := r.generateProcID()
 	if err != nil {
@@ -293,15 +295,17 @@ func (r *EtcdRegistry) CreateNewProcess(machID, svcName string, hostIP string, e
 	desiredState := proc.StateStarted
 	currentState := proc.StateStopped
 	object := &proc.ProcessRunInfo{
-		HostIP:      hostIP,
-		Executor:    executor,
-		Command:     command,
-		Args:        args,
-		Environment: env,
-		Port:        port,
-		Protocol:    protocol,
+		HostIP:         hostIP,
+		HostName:       hostName,
+		HostRegion:     hostRegion,
+		HostDatacenter: hostDatacenter,
+		Executor:       executor,
+		Command:        command,
+		Args:           args,
+		Environment:    env,
+		Port:           port,
+		Protocol:       protocol,
 	}
-
 	if err := r.mustCreateNode(r.prefixed(processPrefix, procKey), "", true); err != nil {
 		e := fmt.Sprintf("Failed to create node of process, %s, %v", procKey, err)
 		log.Error(e)
@@ -324,7 +328,7 @@ func (r *EtcdRegistry) CreateNewProcess(machID, svcName string, hostIP string, e
 			return errors.New(e)
 		}
 	} else {
-		e := fmt.Sprintf("error marshaling RunInfo, %v, %v", object, err)
+		e := fmt.Sprintf("Error marshaling RunInfo, %v, %v", object, err)
 		log.Errorf(e)
 		return errors.New(e)
 	}
@@ -336,7 +340,7 @@ func (r *EtcdRegistry) CreateNewProcess(machID, svcName string, hostIP string, e
 	return nil
 }
 
-func (r *EtcdRegistry) DestroyProcess(procID string) (*proc.ProcessStatus, error) {
+func (r *EtcdRegistry) DeleteProcess(procID string) (*proc.ProcessStatus, error) {
 	status, err := r.Process(procID)
 	if err != nil {
 		return nil, err

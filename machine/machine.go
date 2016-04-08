@@ -17,7 +17,7 @@ type Machine struct {
 	HostDatacenter string
 	PublicIP       string
 	IsAlive        bool
-	metrics        MachineMetrics
+	Stat           MachineStat
 }
 
 func NewMachine() Mach {
