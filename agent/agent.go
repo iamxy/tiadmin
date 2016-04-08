@@ -71,8 +71,16 @@ func (a *Agent) StartNewProcess(status proc.ProcessStatus) error {
 		}
 		executor = ss.Executor
 		command = ss.Command
-		args = ss.Args
-		env = ss.Environments
+		if len(status.RunInfo.Args) > 0 {
+			args = status.RunInfo.Args
+		} else {
+			args = ss.Args
+		}
+		if len(status.RunInfo.Environment) > 0 {
+			env = status.RunInfo.Environment
+		} else {
+			env = ss.Environments
+		}
 	} else {
 		e := fmt.Sprintf("Unregistered service: %s", svcName)
 		log.Error(e)
@@ -81,9 +89,81 @@ func (a *Agent) StartNewProcess(status proc.ProcessStatus) error {
 
 	if err := a.Reg.NewProcess(machID, svcName, hostIP, hostName, hostRegion, hostIDC,
 		executor, command, args, env, port, protocol); err != nil {
-		e := fmt.Sprintf("Create new process failed in etcd, %v", err)
+		e := fmt.Sprintf("Create new process failed in etcd, %s, %s, %v", machID, svcName, err)
 		log.Error(e)
 		return errors.New(e)
 	}
 	return nil
+}
+
+func (a *Agent) DestroyProcess(procID string) error {
+	_, err := a.Reg.DeleteProcess(procID)
+	if err != nil {
+		log.Errorf("Delete process failed in etcd, %s, %v", procID, err)
+	}
+	return err
+}
+
+func (a *Agent) StartProcess(procID string) error {
+	err := a.Reg.UpdateProcessDesiredState(procID, proc.StateStarted)
+	if err != nil {
+		log.Errorf("Change desired state of process to started failed, %s, %v", procID, err)
+	}
+	return err
+}
+
+func (a *Agent) StopProcess(procID string) error {
+	err := a.Reg.UpdateProcessDesiredState(procID, proc.StateStopped)
+	if err != nil {
+		log.Errorf("Change desired state of process to stopped failed, %s, %v", procID, err)
+	}
+	return err
+}
+
+func (a *Agent) ListAllProcesses() (res map[string]*proc.ProcessStatus, err error) {
+	res, err = a.Reg.Processes()
+	if err != nil {
+		log.Errorf("List all processes failed, %v", err)
+	}
+	return
+}
+
+func (a *Agent) ListProcessesByMachID(machID string) (res map[string]*proc.ProcessStatus, err error) {
+	res, err = a.Reg.ProcessesOnMachine(machID)
+	if err != nil {
+		log.Errorf("List processes on specified machine, %s, %v", machID, err)
+	}
+	return
+}
+
+func (a *Agent) ListProcessesBySvcName(svcName string) (res map[string]*proc.ProcessStatus, err error) {
+	res, err = a.Reg.ProcessesOfService(svcName)
+	if err != nil {
+		log.Errorf("List processes of specified service, %s, %v", svcName, err)
+	}
+	return
+}
+
+func (a *Agent) ListProcess(procID string) (res *proc.ProcessStatus, err error) {
+	res, err = a.Reg.Process(procID)
+	if err != nil {
+		log.Errorf("List specified process failed, %s, %v", procID, err)
+	}
+	return
+}
+
+func (a *Agent) ListMachines() (res map[string]*machine.MachineStatus, err error) {
+	res, err = a.Reg.Machines()
+	if err != nil {
+		log.Errorf("List all machines in cluster failed, %v", err)
+	}
+	return
+}
+
+func (a *Agent) ListMachine(machID string) (res *machine.MachineStatus, err error) {
+	res, err = a.Reg.Machine(machID)
+	if err != nil {
+		log.Errorf("List specified machines infomation failed, %s, %v", machID, err)
+	}
+	return
 }
