@@ -27,6 +27,7 @@ var (
 	Agent      *agent.Agent
 	Reconciler *agent.AgentReconciler
 	Publisher  *agent.ProcessStatePublisher
+	Heartbeat  *agent.AgentHeartbeat
 )
 
 func Init(cfg *config.Config) error {
@@ -79,6 +80,7 @@ func Init(cfg *config.Config) error {
 	// stored in the Registry.
 	Reconciler = agent.NewReconciler(reg, eStream, Agent)
 	Publisher = agent.NewProcessStatePublisher(reg, Agent, agentTTL)
+	Heartbeat = agent.NewAgentHeartbeat(reg, Agent, agentTTL)
 
 	log.Infof("Server initialized successfully")
 	return nil
@@ -105,6 +107,8 @@ func Run(cfg *config.Config) (err error) {
 	components := []func(){
 		func() { Reconciler.Run(stopc) },
 		func() { Publisher.Run(stopc) },
+		func() { Heartbeat.Run(stopc) },
+		func() { Agent.Mach.Monitor(stopc) },
 	}
 
 	for _, f := range components {

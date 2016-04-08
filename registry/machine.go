@@ -170,8 +170,8 @@ func (r *EtcdRegistry) createMachine(machID, hostName, hostRegion, hostIDC, publ
 	return nil
 }
 
-func (r *EtcdRegistry) RefreshMachine(machID string, machStat *machine.MachineStat, ttl time.Duration) error {
-	if statstr, err := marshal(machStat); err == nil {
+func (r *EtcdRegistry) RefreshMachine(machID string, machStat machine.MachineStat, ttl time.Duration) error {
+	if statstr, err := marshal(&machStat); err == nil {
 		if _, err := r.kAPI.Set(r.ctx(), r.prefixed(machinePrefix, machID, "statistic"), statstr, &etcd.SetOptions{
 			PrevExist: etcd.PrevExist,
 		}); err != nil {

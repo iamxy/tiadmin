@@ -13,7 +13,7 @@ import (
 
 const (
 	// time between triggering reconciliation routine
-	ReconcileInterval = 5 * time.Second
+	reconcileInterval = 5 * time.Second
 )
 
 func NewReconciler(reg registry.Registry, es pkg.EventStream, ag *Agent) *AgentReconciler {
@@ -44,7 +44,7 @@ func (ar *AgentReconciler) Run(stopc <-chan struct{}) {
 		case <-stopc:
 			log.Debug("Reconciler is exiting due to stop signal")
 			return
-		case <-ar.clock.After(ReconcileInterval):
+		case <-ar.clock.After(reconcileInterval):
 			log.Debug("Trigger reconciling from tick")
 			if err := ar.reconcile(); err != nil {
 				log.Errorf("Reconcile failed, %v", err)
@@ -69,7 +69,7 @@ func (ar *AgentReconciler) reconcile() error {
 
 	elapsed := time.Now().Sub(start)
 	msg := fmt.Sprintf("Reconciling completed in %s", elapsed)
-	if elapsed > ReconcileInterval {
+	if elapsed > reconcileInterval {
 		log.Warning(msg)
 	} else {
 		log.Debug(msg)

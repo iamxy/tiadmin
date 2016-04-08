@@ -12,6 +12,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 const (
@@ -24,6 +25,7 @@ type Machine interface {
 	ShortID() string
 	MatchID(ID string) bool
 	Status() *MachineStatus
+	Monitor(<-chan struct{})
 }
 
 type machine struct {
@@ -32,7 +34,8 @@ type machine struct {
 	hostRegion string
 	hostIDC    string
 	publicIP   string
-	stat       MachineStat
+	stat       *MachineStat
+	rwMutex    sync.RWMutex
 }
 
 func NewMachineFromConfig(cfg *config.Config) (Machine, error) {
@@ -61,7 +64,7 @@ func NewMachineFromConfig(cfg *config.Config) (Machine, error) {
 		hostRegion: cfg.HostRegion,
 		hostIDC:    cfg.HostIDC,
 		publicIP:   publicIP,
-		stat: MachineStat{
+		stat: &MachineStat{
 			LoadAvg:     []float32{},
 			UsageOfDisk: []DiskUsage{},
 		},
@@ -189,6 +192,12 @@ func (m *machine) Status() *MachineStatus {
 			HostIDC:    m.hostIDC,
 			PublicIP:   m.publicIP,
 		},
-		MachStat: m.stat,
+		MachStat: m.getMachineStat(),
 	}
+}
+
+func (m *machine) getMachineStat() MachineStat {
+	m.rwMutex.RLock()
+	defer m.rwMutex.RUnlock()
+	return *m.stat
 }

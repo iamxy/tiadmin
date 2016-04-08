@@ -30,12 +30,12 @@ func (p *ProcessStatePublisher) Run(stopc <-chan struct{}) {
 			log.Debug("ProcessStatePublisher is exiting due to stop signal")
 			return
 		case <-p.clock.After(p.ttl / 2):
-			log.Debug("Trigger ProcessStatePublisher from tick")
+			log.Debug("Trigger ProcessStatePublisher after tick")
 			if err := p.doPublishAll(); err != nil {
 				log.Errorf("ProcessStatePublisher failed, %v", err)
 			}
 		case pub := <-p.agent.Publish():
-			log.Debug("Trigger ProcessStatePublisher from chan")
+			log.Debug("Trigger ProcessStatePublisher by event of publish")
 			if err := p.doPublish(pub); err != nil {
 				log.Errorf("ProcessStatePublisher failed, %v", err)
 			}
