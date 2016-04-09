@@ -21,6 +21,7 @@ angular.module('tiAdminApp')
             });
         };
         refresh();
+        setInterval(refresh, 3000);
 
         // new process dialog
         $scope.openNewProcessDialog = function() {

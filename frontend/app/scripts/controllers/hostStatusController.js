@@ -21,7 +21,20 @@ angular.module('tiAdminApp')
             });
         }
         refresh();
+        setInterval(refresh, 3000);
 
+        // start process
+        $scope.start = function(proc) {
+            alert("start" + proc.procID);
+        };
+
+        $scope.stop = function(process) {
+            alert("stop" + proc.procID);
+        };
+
+        $scope.delete = function(process) {
+            alert("stop" + proc.procID);
+        };
 
         $scope.openNewProcessDialog = function() {
             var modalInstance = $modal.open({

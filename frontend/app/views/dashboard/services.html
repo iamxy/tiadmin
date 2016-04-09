@@ -41,17 +41,58 @@
     </div>
 </div>
 <!-- /.row -->
+<h3>Services</h3>
 <div class="row">
-    <div class="col-lg-12">
-        <div ng-repeat="process in processes">
-            <h4>{{ service.svcName }}</h4>
-            <table class="table table-bordered table-striped">
-                <tr ng-repeat="(key, value) in process">
-                    <td>{{ key }}</td>
-                    <td>{{ value }}</td>
-                </tr>
-            </table>
+    <div class="col-md-3" ng-repeat="service in services | orderBy : 'svcName'">
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>{{ service.svcName }}</b></div>
+            <div class="panel-body">
+                <table class="table table-bordered">
+                    <tr ng-repeat="(key, value) in service">
+                        <td>{{ key }}</td>
+                        <td>{{ value }}</td>
+                    </tr>
+                </table>
+            </div>
         </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-8">
+        <h3>Processes</h3>
+        <table class="table table-bordered table-striped" ng-if="processes.length > 0">
+                <thead>
+                    <th>Service</th>
+                    <th>Process ID</th>
+                    <th>Command</th>
+                    <th>Args</th>
+                    <th>Endpoints</th>
+                    <th class="text-center">Status</th>
+                    <th>Operation</th>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="p in processes | orderBy: 'procID'">
+                        <td class="col-md-1">{{ p.svcName }}</td>
+                        <td class="col-md-2">{{ p.procID }}</td>
+                        <td class="col-md-1">{{ p.command }}</td>
+                        <td class="col-md-3">{{ p.args.join(' ') }}</td>
+                        <td class="col-md-3"><li ng-repeat="endpoint in p.endpoints">{{ endpoint }}</li></td>
+                        <td class="col-md-1 text-center">
+                            <span class="label label-success" ng-if="p.desiredState == 'started' && p.currentState == 'started' && p.isAlive"> Running </span>
+                            <span class="label label-warning" ng-if="p.desiredState == 'started' && p.currentState == 'stopped' && !p.isAlive"> Starting </span>
+                            <span class="label label-danger" ng-if="p.desiredState == 'started' && p.currentState == 'started' && !p.isAlive"> &nbsp;&nbsp;Fatal&nbsp;&nbsp;&nbsp; </span>
+                            <span class="label label-warning" ng-if="p.desiredState == 'stopped' && p.currentState == 'started'"> Stopping </span>
+                            <span class="label label-warning" ng-if="p.desiredState == 'stopped' && p.currentState == 'stopped'"> Stopped </span>
+                            <span class="label label-warning" ng-if="p.desiredState == 'started' && p.currentState == 'stopped' && p.isAlive"> Unknown </span>
+                        </td>
+                        <td class="col-md-2">
+                            <button class="btn btn-default btn-sm" ng-if="p.desiredState == 'stopped' && p.currentState == 'stopped'" ng-click="start(p)">Start</button>
+                            <button class="btn btn-danger btn-sm" ng-if="p.desiredState == 'started' && p.currentState == 'started' && p.isAlive" ng-click="stop(p)">Stop</button>
+                            <button class="btn btn-danger btn-sm" ng-if="p.desiredState == 'stopped' && p.currentState == 'stopped'" ng-click="delete(p)">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
     </div>
 </div>
 <!-- /.row -->
