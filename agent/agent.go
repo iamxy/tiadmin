@@ -20,6 +20,16 @@ type Agent struct {
 	publishch chan []string
 }
 
+func (a *Agent) subscribe(procIDs []string) {
+	if procIDs != nil && len(procIDs) > 0 {
+		a.publishch <- procIDs
+	}
+}
+
+func (a *Agent) publish() chan []string {
+	return a.publishch
+}
+
 func New(reg registry.Registry, pm proc.ProcMgr, m machine.Machine, ttl time.Duration) *Agent {
 	return &Agent{
 		Reg:       reg,
@@ -30,19 +40,7 @@ func New(reg registry.Registry, pm proc.ProcMgr, m machine.Machine, ttl time.Dur
 	}
 }
 
-func (a *Agent) Subscribe(procIDs []string) {
-	if procIDs != nil && len(procIDs) > 0 {
-		a.publishch <- procIDs
-	}
-}
-
-func (a *Agent) Publish() chan []string {
-	return a.publishch
-}
-
-func (a *Agent) StartNewProcess(status proc.ProcessStatus) error {
-	machID := status.MachID
-	svcName := status.SvcName
+func (a *Agent) StartNewProcess(machID, svcName string, runinfo *proc.ProcessRunInfo) error {
 	var hostIP string
 	var hostName string
 	var hostRegion string
@@ -66,15 +64,23 @@ func (a *Agent) StartNewProcess(status proc.ProcessStatus) error {
 
 	if svc, ok := service.Registered[svcName]; ok {
 		ss := svc.Status()
-		executor = ss.Executor
-		command = ss.Command
-		if len(status.RunInfo.Args) > 0 {
-			args = status.RunInfo.Args
+		if len(runinfo.Executor) > 0 {
+			executor = runinfo.Executor
+		} else {
+			executor = ss.Executor
+		}
+		if len(runinfo.Command) > 0 {
+			command = runinfo.Command
+		} else {
+			command = ss.Command
+		}
+		if len(runinfo.Args) > 0 {
+			args = runinfo.Args
 		} else {
 			args = ss.Args
 		}
-		if len(status.RunInfo.Environment) > 0 {
-			env = status.RunInfo.Environment
+		if len(runinfo.Environment) > 0 {
+			env = runinfo.Environment
 		} else {
 			env = ss.Environments
 		}
@@ -149,7 +155,7 @@ func (a *Agent) ListProcess(procID string) (res *proc.ProcessStatus, err error) 
 	return
 }
 
-func (a *Agent) ListMachines() (res map[string]*machine.MachineStatus, err error) {
+func (a *Agent) ListAllMachines() (res map[string]*machine.MachineStatus, err error) {
 	res, err = a.Reg.Machines()
 	if err != nil {
 		log.Errorf("List all machines in cluster failed, %v", err)

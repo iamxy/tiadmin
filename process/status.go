@@ -4,6 +4,17 @@ import (
 	"github.com/pingcap/tiadmin/pkg"
 )
 
+type ProcessState string
+
+func (s ProcessState) String() string {
+	return string(s)
+}
+
+const (
+	StateStarted = ProcessState("StateStarted")
+	StateStopped = ProcessState("StateStopped")
+)
+
 type ProcessStatus struct {
 	ProcID       string
 	SvcName      string

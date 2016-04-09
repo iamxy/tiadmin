@@ -20,6 +20,8 @@ func beegoRouter() error {
 		beego.NSRouter("/processes/:procID", &ProcessController{}, "delete:DestroyProcess"),
 		beego.NSRouter("/processes/:procID/start", &ProcessController{}, "get:StartProcess"),
 		beego.NSRouter("/processes/:procID/stop", &ProcessController{}, "get:StopProcess"),
+		beego.NSRouter("/monitor/real/tidb_perf", &MonitorController{}, "get:TiDBPerformanceMetrics"),
+		beego.NSRouter("/monitor/real/tikv_storage", &MonitorController{}, "get:TiKVStorageMetrics"),
 	)
 	beego.AddNamespace(ns)
 	return nil

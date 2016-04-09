@@ -8,12 +8,20 @@ import (
 )
 
 type Protocol string
-type Port int
+type Port int32
 
 const (
 	ProtocolHttp = Protocol("http")
 	ProtocolUnix = Protocol("unix")
 )
+
+func (p Port) Value() int32 {
+	return int32(p)
+}
+
+func (p Protocol) String() string {
+	return string(p)
+}
 
 type Endpoint struct {
 	Protocol Protocol
@@ -44,4 +52,24 @@ func ParseEndpoint(str string) (Endpoint, error) {
 		res.Port = Port(port)
 	}
 	return res, nil
+}
+
+func ParseEndpoints(slice []string) ([]Endpoint, error) {
+	res := []Endpoint{}
+	for _, s := range slice {
+		ep, err := ParseEndpoint(s)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, ep)
+	}
+	return res, nil
+}
+
+func EndpointsToStrings(endpoints []Endpoint) []string {
+	res := []string{}
+	for _, ep := range endpoints {
+		res = append(res, ep.String())
+	}
+	return res
 }

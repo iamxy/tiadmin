@@ -8,7 +8,7 @@ type TiDBService struct {
 	service
 }
 
-func NewTiDB() Service {
+func NewTiDBService() Service {
 	return &TiDBService{
 		service{
 			svcName:      TiDB_SERVICE,

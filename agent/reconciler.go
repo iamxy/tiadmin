@@ -33,12 +33,6 @@ type AgentReconciler struct {
 }
 
 func (ar *AgentReconciler) Run(stopc <-chan struct{}) {
-	// execute reconciling once immediately
-	if err := ar.reconcile(); err != nil {
-		log.Fatalf("Reconciling run failed at first time, %v", err)
-	}
-
-	// reconciling loop
 	for {
 		select {
 		case <-stopc:
@@ -65,7 +59,7 @@ func (ar *AgentReconciler) reconcile() error {
 	if err != nil {
 		return err
 	}
-	ar.agent.Subscribe(toPublish)
+	ar.agent.subscribe(toPublish)
 
 	elapsed := time.Now().Sub(start)
 	msg := fmt.Sprintf("Reconciling completed in %s", elapsed)

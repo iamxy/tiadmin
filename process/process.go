@@ -16,17 +16,6 @@ import (
 	"time"
 )
 
-type ProcessState string
-
-func (p ProcessState) String() string {
-	return string(p)
-}
-
-const (
-	StateStarted = ProcessState("StateStarted")
-	StateStopped = ProcessState("StateStopped")
-)
-
 type Proc interface {
 	GetProcID() string
 	GetSvcName() string
@@ -120,29 +109,25 @@ type Event struct {
 	Message string
 }
 
-func NewProcess(procID string, svcName string, executor []string, command string, args []string,
-	stdoutFile string, stderrFile string, environment map[string]string, metadata map[string]string,
-	pwd string) (proc Proc, err error) {
-	var root string
-	var cmd string
-	root, err = pkg.GetRootDir()
-	if err != nil {
-		log.Errorf("GetRootDir failed, error: %v", err)
-		return nil, err
-	}
-	cmd, err = pkg.CheckFileExist(filepath.Join(root, command))
-	if err != nil {
-		cmd, err = pkg.CheckFileExist(filepath.Join(root, "bin", command))
+func NewProcess(procID string, svcName string, executor []string, command string, args []string, stdoutFile string,
+	stderrFile string, environment map[string]string, metadata map[string]string, pwd string) (Proc, error) {
+	var root = pkg.GetRootDir()
+
+	var cmd = filepath.Join(root, command)
+	if _, err := pkg.CheckFileExist(cmd); err != nil {
+		cmd = filepath.Join(root, "bin", command)
+		_, err := pkg.CheckFileExist(cmd)
 		if err != nil {
-			e := fmt.Sprintf("Cannot find binary file of command, %s", command)
+			e := fmt.Sprintf("The command's binary file not exists in path, %s", cmd)
 			return nil, errors.New(e)
 		}
 	}
+
 	if len(stdoutFile) > 0 || len(stderrFile) > 0 {
-		logdir := filepath.Join(root, "logs")
+		var logdir = filepath.Join(root, "logs")
 		if _, err := os.Stat(logdir); err != nil {
 			if err := os.Mkdir(logdir, os.ModePerm); err != nil {
-				e := fmt.Sprintf("Failed to Mkdir %s, error: %v", logdir, err)
+				e := fmt.Sprintf("Failed to make directory, %s, %v", logdir, err)
 				return nil, errors.New(e)
 			}
 		}
@@ -153,12 +138,13 @@ func NewProcess(procID string, svcName string, executor []string, command string
 			stderrFile = filepath.Join(logdir, stderrFile)
 		}
 	}
+
 	environment = AddDefaultVars(environment)
 	if _, ok := environment["SERVICE"]; !ok {
 		environment["SERVICE"] = svcName
 	}
 
-	proc = &Process{
+	return &Process{
 		ProcID:      procID,
 		SvcName:     svcName,
 		Executor:    executor,
@@ -171,8 +157,7 @@ func NewProcess(procID string, svcName string, executor []string, command string
 		Pwd:         pwd,
 		procRuns:    make([]ProcRun, 0),
 		state:       StateStopped,
-	}
-	return
+	}, nil
 }
 
 func (p *Process) GetProcID() string {

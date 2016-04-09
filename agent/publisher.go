@@ -34,7 +34,7 @@ func (p *ProcessStatePublisher) Run(stopc <-chan struct{}) {
 			if err := p.doPublishAll(); err != nil {
 				log.Errorf("ProcessStatePublisher failed, %v", err)
 			}
-		case pub := <-p.agent.Publish():
+		case pub := <-p.agent.publish():
 			log.Debug("Trigger ProcessStatePublisher by event of publish")
 			if err := p.doPublish(pub); err != nil {
 				log.Errorf("ProcessStatePublisher failed, %v", err)

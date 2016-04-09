@@ -79,11 +79,7 @@ func IsLocalMachineID(mID string) bool {
 }
 
 func readLocalMachineID() (string, error) {
-	root, err := pkg.GetRootDir()
-	if err != nil {
-		return "", err
-	}
-	fullPath := filepath.Join(root, machineIDFile)
+	fullPath := filepath.Join(pkg.GetRootDir(), machineIDFile)
 	if _, err := pkg.CheckFileExist(fullPath); err != nil {
 		return generateLocalMachineID(fullPath)
 	} else {

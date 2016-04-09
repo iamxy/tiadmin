@@ -218,18 +218,14 @@ func processStatusFromEtcdNode(procID, machID, svcName string, node *etcd.Node) 
 			}
 		}
 	}
-	return nil, nil
+	return status, nil
 }
 
 func parseProcessState(state string) (proc.ProcessState, error) {
 	switch state {
-	case "started":
+	case proc.StateStarted.String():
 		return proc.StateStarted, nil
-	case "Started":
-		return proc.StateStarted, nil
-	case "stopped":
-		return proc.StateStopped, nil
-	case "Stopped":
+	case proc.StateStopped.String():
 		return proc.StateStopped, nil
 	default:
 		return proc.StateStopped, errors.New(fmt.Sprintf("Illegal process state: %s", state))

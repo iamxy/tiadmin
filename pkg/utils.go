@@ -15,24 +15,29 @@ const (
 	KC_RAND_KIND_ALL   = 3
 )
 
-func GetCmdDir() (string, error) {
+func GetCmdDir() string {
 	path, err := filepath.Abs(os.Args[0])
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	return filepath.Dir(path), nil
+	return filepath.Dir(path)
 }
 
-func GetRootDir() (string, error) {
-	cd, err := GetCmdDir()
-	if err != nil {
-		return "", err
-	}
-	if filepath.Base(cd) == "bin" {
-		return filepath.Dir(cd), nil
+func GetRootDir() string {
+	var cmddir = GetCmdDir()
+	if filepath.Base(cmddir) == "bin" {
+		return filepath.Dir(cmddir)
 	} else {
-		return cd, nil
+		return cmddir
 	}
+}
+
+func GetWorkDir() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return wd
 }
 
 func CheckFileExist(filepath string) (string, error) {

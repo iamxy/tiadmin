@@ -8,7 +8,7 @@ var Registered map[string]Service
 
 func RegisterServices() {
 	Registered = make(map[string]Service)
-	Registered[TiDB_SERVICE] = NewTiDB()
+	Registered[TiDB_SERVICE] = NewTiDBService()
 }
 
 func RegisterServciesFromEtcd(reg registry.Registry) {

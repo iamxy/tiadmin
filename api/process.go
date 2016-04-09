@@ -2,8 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/pingcap/tiadmin/pkg"
+	"github.com/pingcap/tiadmin/process"
 	"github.com/pingcap/tiadmin/schema"
-	"strconv"
+	"github.com/pingcap/tiadmin/server"
 )
 
 type ProcessController struct {
@@ -11,58 +13,40 @@ type ProcessController struct {
 }
 
 func (c *ProcessController) FindAllProcesses() {
-	procs := []schema.Process{}
-	for _, val := range mockProcs {
-		procs = append(procs, val)
+	status, err := server.Agent.ListAllProcesses()
+	if err != nil {
+		c.ServeError(500, err.Error())
+	}
+	procs := []*schema.Process{}
+	for _, s := range status {
+		procs = append(procs, buildProcessModel(s))
 	}
 	c.Data["json"] = procs
 	c.ServeJSON()
 }
 
 func (c *ProcessController) StartNewProcess() {
-	var proc schema.Process
-	err := json.Unmarshal(c.Ctx.Input.RequestBody, &proc)
-	if err != nil || len(proc.SvcName) == 0 || len(proc.MachID) == 0 {
-		c.Abort("400")
+	var body schema.Process
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &body)
+	if err != nil {
+		c.ServeError(500, err.Error())
 	}
-	if svc, ok := mockServices[proc.SvcName]; ok {
-		if len(proc.Executor) == 0 {
-			proc.Executor = svc.Executor
-		}
-		if len(proc.Command) > 0 {
-			proc.Command = svc.Command
-		}
-		if len(proc.Args) == 0 {
-			proc.Args = svc.Args
-		}
-		if len(proc.Environments) == 0 {
-			proc.Environments = svc.Environments
-		}
-		if proc.Port == 0 {
-			proc.Port = svc.Port
-		}
-		if len(proc.Protocol) == 0 {
-			proc.Protocol = svc.Protocol
-		}
-	} else {
-		c.Abort("400")
+	if len(body.SvcName) == 0 || len(body.MachID) == 0 {
+		c.ServeError(500, "Request parameters 'svcName' or 'MachID' is necessary")
 	}
-	if mach, ok := mockHosts[proc.MachID]; ok {
-		proc.PublicIP = mach.PublicIP
-		proc.HostName = mach.HostName
-		proc.HostMeta = mach.HostMeta
-	} else {
-		c.Abort("400")
+	runinfo := &process.ProcessRunInfo{
+		Executor:    body.Executor,
+		Command:     body.Command,
+		Args:        body.Args,
+		Environment: transformEnvironmentsToMap(body.Environments),
+		Port:        pkg.Port(body.Port),
+		Protocol:    pkg.Protocol(body.Protocol),
 	}
-	proc.ProcID = strconv.Itoa(mockProcID)
-	mockProcID++
-	if len(proc.DesiredState) == 0 {
-		proc.DesiredState = "started"
+	if err := server.Agent.StartNewProcess(body.MachID, body.SvcName, runinfo); err != nil {
+		c.ServeError(500, err.Error())
 	}
-	proc.CurrentState = "stopped"
-	proc.IsAlive = false
-	mockProcs[proc.ProcID] = proc
-	c.Data["json"] = proc
+	// TODO: return the last status of process
+	c.Data["json"] = body
 	c.ServeJSON()
 }
 
@@ -71,18 +55,16 @@ func (c *ProcessController) FindByHost() {
 	if len(machID) == 0 {
 		c.Abort("400")
 	}
-	if _, ok := mockHosts[machID]; ok {
-		res := []schema.Process{}
-		for _, proc := range mockProcs {
-			if proc.MachID == machID {
-				res = append(res, proc)
-			}
-		}
-		c.Data["json"] = res
-		c.ServeJSON()
-	} else {
-		c.Abort("404")
+	status, err := server.Agent.ListProcessesByMachID(machID)
+	if err != nil {
+		c.ServeError(500, err.Error())
 	}
+	procs := []*schema.Process{}
+	for _, s := range status {
+		procs = append(procs, buildProcessModel(s))
+	}
+	c.Data["json"] = procs
+	c.ServeJSON()
 }
 
 func (c *ProcessController) FindByService() {
@@ -90,18 +72,16 @@ func (c *ProcessController) FindByService() {
 	if len(svcName) == 0 {
 		c.Abort("400")
 	}
-	if _, ok := mockServices[svcName]; ok {
-		res := []schema.Process{}
-		for _, proc := range mockProcs {
-			if proc.SvcName == svcName {
-				res = append(res, proc)
-			}
-		}
-		c.Data["json"] = res
-		c.ServeJSON()
-	} else {
-		c.Abort("404")
+	status, err := server.Agent.ListProcessesBySvcName(svcName)
+	if err != nil {
+		c.ServeError(500, err.Error())
 	}
+	procs := []*schema.Process{}
+	for _, s := range status {
+		procs = append(procs, buildProcessModel(s))
+	}
+	c.Data["json"] = procs
+	c.ServeJSON()
 }
 
 func (c *ProcessController) FindProcess() {
@@ -109,12 +89,12 @@ func (c *ProcessController) FindProcess() {
 	if len(procID) == 0 {
 		c.Abort("400")
 	}
-	if proc, ok := mockProcs[procID]; ok {
-		c.Data["json"] = proc
-		c.ServeJSON()
-	} else {
-		c.Abort("404")
+	s, err := server.Agent.ListProcess(procID)
+	if err != nil {
+		c.ServeError(500, err.Error())
 	}
+	c.Data["json"] = buildProcessModel(s)
+	c.ServeJSON()
 }
 
 func (c *ProcessController) DestroyProcess() {
@@ -122,13 +102,14 @@ func (c *ProcessController) DestroyProcess() {
 	if len(procID) == 0 {
 		c.Abort("400")
 	}
-	if proc, ok := mockProcs[procID]; ok {
-		delete(mockProcs, procID)
-		c.Data["json"] = proc
-		c.ServeJSON()
-	} else {
-		c.Abort("404")
+	err := server.Agent.DestroyProcess(procID)
+	if err != nil {
+		c.ServeError(500, err.Error())
 	}
+	c.Data["json"] = &schema.Process{
+		ProcID: procID,
+	}
+	c.ServeJSON()
 }
 
 func (c *ProcessController) StartProcess() {
@@ -136,14 +117,15 @@ func (c *ProcessController) StartProcess() {
 	if len(procID) == 0 {
 		c.Abort("400")
 	}
-	if proc, ok := mockProcs[procID]; ok {
-		proc.DesiredState = "started"
-		mockProcs[procID] = proc
-		c.Data["json"] = proc
-		c.ServeJSON()
-	} else {
-		c.Abort("404")
+	err := server.Agent.StartProcess(procID)
+	if err != nil {
+		c.ServeError(500, err.Error())
 	}
+	c.Data["json"] = &schema.Process{
+		ProcID:       procID,
+		DesiredState: process.StateStarted.String(),
+	}
+	c.ServeJSON()
 }
 
 func (c *ProcessController) StopProcess() {
@@ -151,12 +133,38 @@ func (c *ProcessController) StopProcess() {
 	if len(procID) == 0 {
 		c.Abort("400")
 	}
-	if proc, ok := mockProcs[procID]; ok {
-		proc.DesiredState = "stopped"
-		mockProcs[procID] = proc
-		c.Data["json"] = proc
-		c.ServeJSON()
-	} else {
-		c.Abort("404")
+	err := server.Agent.StopProcess(procID)
+	if err != nil {
+		c.ServeError(500, err.Error())
 	}
+	c.Data["json"] = &schema.Process{
+		ProcID:       procID,
+		DesiredState: process.StateStopped.String(),
+	}
+	c.ServeJSON()
+}
+
+func buildProcessModel(s *process.ProcessStatus) *schema.Process {
+	p := &schema.Process{
+		ProcID:       s.ProcID,
+		SvcName:      s.SvcName,
+		MachID:       s.MachID,
+		DesiredState: s.DesiredState.String(),
+		CurrentState: s.CurrentState.String(),
+		IsAlive:      s.IsAlive,
+		Endpoints:    pkg.EndpointsToStrings(s.Endpoints),
+		Executor:     s.RunInfo.Executor,
+		Command:      s.RunInfo.Command,
+		Args:         s.RunInfo.Args,
+		Environments: transformMapToEnvironments(s.RunInfo.Environment),
+		PublicIP:     s.RunInfo.HostIP,
+		HostName:     s.RunInfo.HostName,
+		HostMeta: schema.HostMeta{
+			Region:     s.RunInfo.HostRegion,
+			Datacenter: s.RunInfo.HostIDC,
+		},
+		Port:     s.RunInfo.Port.Value(),
+		Protocol: s.RunInfo.Protocol.String(),
+	}
+	return p
 }

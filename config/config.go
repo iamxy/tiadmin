@@ -3,10 +3,8 @@ package config
 import (
 	"errors"
 	"flag"
-	"github.com/ngaut/log"
 	"github.com/pingcap/tiadmin/pkg"
 	"github.com/rakyll/globalconf"
-	"os"
 	"path"
 )
 
@@ -23,17 +21,17 @@ const (
 )
 
 type Config struct {
-	EtcdServers         []string
-	EtcdKeyPrefix       string
-	EtcdRequestTimeout  int
-	MonitorInterval int
-	HostIP              string
-	HostName            string
-	HostRegion          string
-	HostIDC             string
-	AgentTTL            string
-	TokenLimit          int
-	IsMock              bool
+	EtcdServers        []string
+	EtcdKeyPrefix      string
+	EtcdRequestTimeout int
+	MonitorInterval    int
+	HostIP             string
+	HostName           string
+	HostRegion         string
+	HostIDC            string
+	AgentTTL           string
+	TokenLimit         int
+	IsMock             bool
 }
 
 func ParseFlag() (*Config, error) {
@@ -63,37 +61,25 @@ func ParseFlag() (*Config, error) {
 	etcdEndpoints.Set(*etcdServers)
 
 	cfg := &Config{
-		EtcdServers:         etcdEndpoints,
-		EtcdKeyPrefix:       *etcdKeyPrefix,
-		EtcdRequestTimeout:  *etcdRequestTimeout,
-		MonitorInterval: *monitorInterval,
-		HostIP:              *hostIP,
-		HostName:            *hostName,
-		HostRegion:          *hostRegion,
-		HostIDC:             *hostIDC,
-		AgentTTL:            *agentTTL,
-		TokenLimit:          *tokenLimit,
-		IsMock:              *isMock,
+		EtcdServers:        etcdEndpoints,
+		EtcdKeyPrefix:      *etcdKeyPrefix,
+		EtcdRequestTimeout: *etcdRequestTimeout,
+		MonitorInterval:    *monitorInterval,
+		HostIP:             *hostIP,
+		HostName:           *hostName,
+		HostRegion:         *hostRegion,
+		HostIDC:            *hostIDC,
+		AgentTTL:           *agentTTL,
+		TokenLimit:         *tokenLimit,
+		IsMock:             *isMock,
 	}
 	return cfg, nil
 }
 
 func pathToConfigFile() (string, error) {
-	cd, err := pkg.GetCmdDir()
-	if err != nil {
-		log.Errorf("get command directory error, %v", err)
-		return "", err
-	}
-	rd, err := pkg.GetRootDir()
-	if err != nil {
-		log.Errorf("get root directory error, %v", err)
-		return "", err
-	}
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Errorf("get work directory error, %v", err)
-		return "", err
-	}
+	cd := pkg.GetCmdDir()
+	rd := pkg.GetRootDir()
+	wd := pkg.GetWorkDir()
 
 	if path, err := pkg.CheckFileExist(path.Join(cd, DefaultConfigFile)); err == nil {
 		return path, nil

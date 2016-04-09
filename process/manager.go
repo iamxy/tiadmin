@@ -41,15 +41,8 @@ func buildProcessMeta(target *ProcessStatus) map[string]string {
 }
 
 func (pm *processManager) CreateProcess(target *ProcessStatus) (Proc, error) {
-	var pwd string
-	if root, err := pkg.GetRootDir(); err == nil {
-		pwd = root
-	} else {
-		log.Errorf("GetRootDir failed, error: %v", err)
-		return nil, err
-	}
+	pwd := pkg.GetRootDir()
 	meta := buildProcessMeta(target)
-
 	if proc, err := NewProcess(target.ProcID, target.SvcName, target.RunInfo.Executor, target.RunInfo.Command,
 		target.RunInfo.Args, "", "", target.RunInfo.Environment, meta, pwd); err == nil {
 		if target.DesiredState == StateStarted {

@@ -2,7 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/pingcap/tiadmin/machine"
 	"github.com/pingcap/tiadmin/schema"
+	"github.com/pingcap/tiadmin/server"
 )
 
 type HostController struct {
@@ -10,9 +12,13 @@ type HostController struct {
 }
 
 func (c *HostController) FindAllHosts() {
-	hosts := []schema.Host{}
-	for _, val := range mockHosts {
-		hosts = append(hosts, val)
+	status, err := server.Agent.ListAllMachines()
+	if err != nil {
+		c.ServeError(500, err.Error())
+	}
+	hosts := []*schema.Host{}
+	for _, s := range status {
+		hosts = append(hosts, buildHostModel(s))
 	}
 	c.Data["json"] = hosts
 	c.ServeJSON()
@@ -23,11 +29,11 @@ func (c *HostController) FindHost() {
 	if len(machID) == 0 {
 		c.Abort("400")
 	}
-	host, ok := mockHosts[machID]
-	if !ok {
-		c.Abort("404")
+	m, err := server.Agent.ListMachine(machID)
+	if err != nil {
+		c.ServeError(500, err.Error())
 	}
-	c.Data["json"] = host
+	c.Data["json"] = buildHostModel(m)
 	c.ServeJSON()
 }
 
@@ -36,17 +42,54 @@ func (c *HostController) SetHostMetaInfo() {
 	if len(machID) == 0 {
 		c.Abort("400")
 	}
-	host, ok := mockHosts[machID]
-	if !ok {
-		c.Abort("404")
+	m, err := server.Agent.ListMachine(machID)
+	if err != nil {
+		c.ServeError(500, err.Error())
 	}
 	var meta schema.HostMeta
-	err := json.Unmarshal(c.Ctx.Input.RequestBody, &meta)
-	if err != nil || len(meta.Region) == 0 || len(meta.Datacenter) == 0 {
-		c.Abort("400")
+	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &meta); err != nil {
+		c.ServeError(500, err.Error())
 	}
-	host.HostMeta = meta
-	mockHosts[machID] = host
-	c.Data["json"] = host
+	if len(meta.Region) == 0 || len(meta.Datacenter) == 0 {
+		c.ServeError(500, "Request parameters 'Region' or 'Datacenter' is necessary")
+	}
+	// TODO: implement update of host regoin and host IDC infomation, if SetHostMetaInfo is not deprecated in future
+	c.Data["json"] = buildHostModel(m)
 	c.ServeJSON()
+}
+
+func buildHostModel(s *machine.MachineStatus) *schema.Host {
+	h := &schema.Host{
+		MachID:   s.MachID,
+		HostName: s.MachInfo.HostName,
+		HostMeta: schema.HostMeta{
+			Region:     s.MachInfo.HostRegion,
+			Datacenter: s.MachInfo.HostIDC,
+		},
+		PublicIP: s.MachInfo.PublicIP,
+		IsAlive:  s.IsAlive,
+		Machine: schema.Machine{
+			MachID:      s.MachID,
+			UsageOfCPU:  s.MachStat.UsageOfCPU,
+			TotalMem:    s.MachStat.TotalMem,
+			UsedMem:     s.MachStat.UsedMem,
+			TotalSwp:    s.MachStat.TotalSwp,
+			UsedSwp:     s.MachStat.UsedMem,
+			LoadAvg:     s.MachStat.LoadAvg,
+			UsageOfDisk: transformDiskUsage(s.MachStat.UsageOfDisk),
+		},
+	}
+	return h
+}
+
+func transformDiskUsage(disks []machine.DiskUsage) []schema.DiskUsage {
+	res := []schema.DiskUsage{}
+	for _, disk := range disks {
+		res = append(res, schema.DiskUsage{
+			Mount:     disk.Mount,
+			TotalSize: disk.TotalSize,
+			UsedSize:  disk.UsedSize,
+		})
+	}
+	return res
 }

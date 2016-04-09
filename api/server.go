@@ -15,7 +15,10 @@ import (
 
 func bad_request(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
-	modelError := schema.ModelError{ErrCode: http.StatusBadRequest, Reason: "Bad request parameters"}
+	modelError := &schema.ModelError{
+		ErrCode: http.StatusBadRequest,
+		Reason:  "Bad request parameters",
+	}
 	json, err := json.Marshal(modelError)
 	if err != nil {
 		log.Errorf("Failed sending HTTP response body: %v", err)
