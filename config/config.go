@@ -35,16 +35,16 @@ type Config struct {
 }
 
 func ParseFlag() (*Config, error) {
-	etcdServers := flag.String("etcd_servers", "http://127.0.0.1:2379,http://127.0.0.1:4001", "List of etcd endpoints")
-	etcdKeyPrefix := flag.String("etcd_key_prefix", DefaultKeyPrefix, "Namespace for tiadmin registry in etcd")
-	etcdRequestTimeout := flag.Int("etcd_request_timeout", 1000, "Amount of time in milliseconds to allow a single etcd request before considering it failed.")
-	monitorInterval := flag.Int("monitor_interval", 2000, "Interval at which the monitor should check and report the cluster status in etcd periodically.")
-	hostIP := flag.String("host_ip", "", "IP address that this host should publish")
-	hostName := flag.String("host_name", "", "The identifier of this machine in cluster")
-	hostRegion := flag.String("host_region", "", "Geographical region where this machine located")
-	hostIDC := flag.String("host_idc", "", "The IDC which this machine placed physically")
-	agentTTL := flag.String("agent_ttl", DefaultTTL, "TTL in seconds of machine state in etcd")
-	tokenLimit := flag.Int("token_limit", 100, "Maximum number of entries per page returned from API requests")
+	etcdServers := flag.String("etcd", "http://127.0.0.1:2379,http://127.0.0.1:4001", "List of etcd endpoints, default 'http://127.0.0.1:2379'")
+	etcdKeyPrefix := flag.String("etcd-prefix", DefaultKeyPrefix, "Namespace for tiadmin registry in etcd")
+	etcdRequestTimeout := flag.Int("etcd-timeout", 1000, "Amount of time in milliseconds to allow a single etcd request before considering it failed.")
+	monitorInterval := flag.Int("interval", 2000, "Interval at which the monitor should check and report the cluster status in etcd periodically.")
+	hostIP := flag.String("ip", "", "IP address that this host should publish")
+	hostName := flag.String("name", "", "The identifier of this machine in cluster")
+	hostRegion := flag.String("region", "", "Geographical region where this machine located")
+	hostIDC := flag.String("idc", "", "The IDC which this machine placed physically")
+	agentTTL := flag.String("ttl", DefaultTTL, "TTL in seconds of machine state in etcd")
+	tokenLimit := flag.Int("limit", 100, "Maximum number of entries per page returned from API requests")
 	isMock := flag.Bool("mock", false, "Whether to privide mock APIs for test")
 
 	opts := globalconf.Options{EnvPrefix: EnvConfigPrefix}
