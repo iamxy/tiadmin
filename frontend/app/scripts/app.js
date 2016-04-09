@@ -33,6 +33,7 @@ angular
                         return $ocLazyLoad.load({
                                 name: 'tiAdminApp',
                                 files: [
+                                    'scripts/services.js',
                                     'scripts/directives/header/header.js',
                                     'scripts/directives/sidebar/sidebar.js',
                                 ]
@@ -86,7 +87,8 @@ angular
                         return $ocLazyLoad.load({
                             name: 'tiAdminApp',
                             files: [
-                                'scripts/controllers/hostStatusController.js',
+                                'scripts/directives/processlist/processlist.js',
+                                'scripts/controllers/hostStatusController.js'
                             ]
                         })
                     }

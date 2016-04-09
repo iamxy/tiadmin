@@ -8,24 +8,21 @@
  */
 
 angular.module('tiAdminApp')
-    .directive('sidebar', ['$location', function($interval, $http) {
+    .directive('sidebar', ['$location', 'HostService', function($interval, $http, HostService) {
         return {
             templateUrl: 'scripts/directives/sidebar/sidebar.html',
             restrict: 'E',
             replace: true,
             scope: {},
-            controller: function($scope,$interval, $http) {
+            controller: function($scope, $interval, $http, HostService) {
                 $scope.selectedMenu = 'dashboard';
                 $scope.collapseVar = 0;
                 $scope.multiCollapseVar = 0;
 
-                var refreshNodes = function() {
-                    $http.get("http://localhost:8080/api/v1/hosts").then(function(resp) {
-                        $scope.hosts = resp.data
-                    });
-                };
-                refreshNodes();
-                setInterval(refreshNodes, 5000);
+                $scope.hosts = HostService.getHosts();
+                setInterval(function() {
+                    $scope.hosts = HostService.getHosts();
+                }, 1000);
 
                 $scope.check = function(x) {
                     if (x == $scope.collapseVar)
