@@ -56,7 +56,7 @@
                     <th>Operation</th>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="p in processes | orderBy: 'procID'">
+                    <tr ng-repeat="p in processes | orderBy: '-procID'">
                         <td class="col-md-1">{{ p.svcName }}</td>
                         <td class="col-md-2">{{ p.procID }}</td>
                         <td class="col-md-1">{{ p.command }}</td>
