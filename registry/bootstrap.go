@@ -18,7 +18,9 @@ func (r *EtcdRegistry) IsBootstrapped(cfg *config.Config) bool {
 	opts := &etcd.GetOptions{
 		Quorum: true,
 	}
-	resp, err := r.kAPI.Get(r.ctx(), key, opts)
+	ctx, cancel := r.ctx()
+	defer cancel()
+	resp, err := r.kAPI.Get(ctx, key, opts)
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
 			// not bootstrapped yet

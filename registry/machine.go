@@ -13,13 +13,15 @@ import (
 const machinePrefix = "machine"
 
 func (r *EtcdRegistry) Machine(machID string) (*machine.MachineStatus, error) {
-	resp, err := r.kAPI.Get(r.ctx(), r.prefixed(machinePrefix, machID), &etcd.GetOptions{
+	ctx, cancel := r.ctx()
+	defer cancel()
+	resp, err := r.kAPI.Get(ctx, r.prefixed(machinePrefix, machID), &etcd.GetOptions{
 		Recursive: true,
 		Quorum:    true,
 	})
 	if err != nil {
-		// not found
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			// not found
 			e := fmt.Sprintf("Machine not found in etcd, machID: %s, %v", machID, err)
 			log.Error(e)
 			return nil, errors.New(e)
@@ -36,7 +38,9 @@ func (r *EtcdRegistry) Machine(machID string) (*machine.MachineStatus, error) {
 
 func (r *EtcdRegistry) Machines() (map[string]*machine.MachineStatus, error) {
 	key := r.prefixed(machinePrefix)
-	resp, err := r.kAPI.Get(r.ctx(), r.prefixed(machinePrefix), &etcd.GetOptions{
+	ctx, cancel := r.ctx()
+	defer cancel()
+	resp, err := r.kAPI.Get(ctx, r.prefixed(machinePrefix), &etcd.GetOptions{
 		Recursive: true,
 		Quorum:    true,
 	})
@@ -90,35 +94,51 @@ func machineStatusFromEtcdNode(machID string, node *etcd.Node) (*machine.Machine
 }
 
 func (r *EtcdRegistry) RegisterMachine(machID, hostName, hostRegion, hostIDC, publicIP string) error {
-	_, err := r.kAPI.Get(r.ctx(), r.prefixed(machinePrefix, machID), &etcd.GetOptions{
-		Quorum: true,
-	})
-	if err != nil {
-		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
-			// not found than create new machine node
-			return r.createMachine(machID, hostName, hostRegion, hostIDC, publicIP)
-		}
+	if exists, err := r.checkMachineExists(machID); err != nil {
 		return err
+	} else if !exists {
+		// not found then create a new machine node
+		return r.createMachine(machID, hostName, hostRegion, hostIDC, publicIP)
 	}
 
 	// found it, update host infomation of the machine
-	object := &machine.MachineInfo{
+	machInfo := &machine.MachineInfo{
 		HostName:   hostName,
 		HostRegion: hostRegion,
 		HostIDC:    hostIDC,
 		PublicIP:   publicIP,
 	}
-	if objstr, err := marshal(object); err == nil {
-		if _, err := r.kAPI.Set(r.ctx(), r.prefixed(machinePrefix, machID, "object"), objstr, &etcd.SetOptions{
-			PrevExist: etcd.PrevExist,
-		}); err != nil {
-			e := fmt.Sprintf("Failed to update MachInfo of machine node in etcd, %s, %v, %v", machID, object, err)
-			log.Error(e)
-			return errors.New(e)
+	return r.updateMeachineInfo(machID, machInfo)
+}
+
+func (r *EtcdRegistry) checkMachineExists(machID string) (bool, error) {
+	ctx, cancel := r.ctx()
+	defer cancel()
+	_, err := r.kAPI.Get(ctx, r.prefixed(machinePrefix, machID), &etcd.GetOptions{
+		Quorum: true,
+	})
+	if err != nil {
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			return false, nil
 		}
-	} else {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *EtcdRegistry) updateMeachineInfo(machID string, machInfo *machine.MachineInfo) error {
+	object, err := marshal(machInfo)
+	if err != nil {
 		e := fmt.Sprintf("Error marshaling MachineInfo, %v, %v", object, err)
 		log.Errorf(e)
+		return errors.New(e)
+	}
+	ctx, cancel := r.ctx()
+	defer cancel()
+	key := r.prefixed(machinePrefix, machID, "object")
+	if _, err := r.kAPI.Set(ctx, key, object, &etcd.SetOptions{}); err != nil {
+		e := fmt.Sprintf("Failed to update MachInfo in etcd, %s, %v, %v", machID, object, err)
+		log.Error(e)
 		return errors.New(e)
 	}
 	return nil
@@ -171,39 +191,58 @@ func (r *EtcdRegistry) createMachine(machID, hostName, hostRegion, hostIDC, publ
 }
 
 func (r *EtcdRegistry) RefreshMachine(machID string, machStat machine.MachineStat, ttl time.Duration) error {
-	if statstr, err := marshal(&machStat); err == nil {
-		if _, err := r.kAPI.Set(r.ctx(), r.prefixed(machinePrefix, machID, "statistic"), statstr, &etcd.SetOptions{
-			PrevExist: etcd.PrevExist,
-		}); err != nil {
-			e := fmt.Sprintf("Failed to update machine statistic node of machine in etcd, %s, %v", machID, err)
-			log.Error(e)
-			return errors.New(e)
-		}
-	} else {
+	if err := r.refreshMachineStatistic(machID, &machStat); err != nil {
+		return nil
+	}
+
+	return nil
+}
+
+func (r *EtcdRegistry) refreshMachineStatistic(machID string, machStat *machine.MachineStat) error {
+	object, err := marshal(machStat)
+	if err != nil {
 		e := fmt.Sprintf("Error marshaling MachineStat, %v, %v", machStat, err)
 		log.Errorf(e)
 		return errors.New(e)
 	}
+	key := r.prefixed(machinePrefix, machID, "statistic")
+	ctx, cancel := r.ctx()
+	defer cancel()
+	if _, err := r.kAPI.Set(ctx, key, object, &etcd.SetOptions{}); err != nil {
+		e := fmt.Sprintf("Failed to update machine statistic node of machine in etcd, %s, %v", machID, err)
+		log.Error(e)
+		return errors.New(e)
+	}
+	return nil
+}
 
+func (r *EtcdRegistry) refreshMachineAlive(machID string, ttl time.Duration) error {
 	aliveKey := r.prefixed(machinePrefix, machID, "alive")
 	// try to touch alive state of machine, update ttl
-	_, err := r.kAPI.Set(r.ctx(), aliveKey, "", &etcd.SetOptions{
+	ctx, cancel := r.ctx()
+	defer cancel()
+	if _, err := r.kAPI.Set(ctx, aliveKey, "", &etcd.SetOptions{
 		PrevExist: etcd.PrevExist,
 		TTL:       ttl,
 		Refresh:   true,
+	}); err != nil {
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			return r.createMachineAlive(machID, ttl)
+		}
+		return err
+	}
+	return nil
+}
+
+func (r *EtcdRegistry) createMachineAlive(machID string, ttl time.Duration) error {
+	aliveKey := r.prefixed(machinePrefix, machID, "alive")
+	ctx, cancel := r.ctx()
+	defer cancel()
+	_, err := r.kAPI.Set(ctx, aliveKey, "", &etcd.SetOptions{
+		TTL: ttl,
 	})
 	if err != nil {
-		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
-			// create new alive state on machine node
-			if _, err := r.kAPI.Set(r.ctx(), aliveKey, "", &etcd.SetOptions{
-				PrevExist: etcd.PrevNoExist,
-				TTL:       ttl,
-			}); err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
+		return err
 	}
 	return nil
 }

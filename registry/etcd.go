@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"fmt"
 	etcd "github.com/coreos/etcd/client"
 	"golang.org/x/net/context"
 	"path"
@@ -25,9 +26,9 @@ func NewEtcdRegistry(kapi etcd.KeysAPI, keyPrefix string, reqTimeout time.Durati
 	}
 }
 
-func (r *EtcdRegistry) ctx() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), r.reqTimeout)
-	return ctx
+func (r *EtcdRegistry) ctx() (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.reqTimeout)
+	return ctx, cancel
 }
 
 func (r *EtcdRegistry) prefixed(p ...string) string {
@@ -44,7 +45,9 @@ func (r *EtcdRegistry) createNode(key, val string, isDir bool) (err error) {
 		PrevExist: etcd.PrevNoExist,
 		Dir:       isDir,
 	}
-	_, err = r.kAPI.Set(r.ctx(), key, val, opts)
+	ctx, cancel := r.ctx()
+	defer cancel()
+	_, err = r.kAPI.Set(ctx, key, val, opts)
 	return
 }
 
@@ -53,7 +56,9 @@ func (r *EtcdRegistry) deleteNode(key string, isDir bool) (err error) {
 		Recursive: isDir, // weird ?
 		Dir:       isDir,
 	}
-	_, err = r.kAPI.Delete(r.ctx(), key, opts)
+	ctx, cancel := r.ctx()
+	defer cancel()
+	_, err = r.kAPI.Delete(ctx, key, opts)
 	return
 }
 
@@ -70,28 +75,60 @@ func (r *EtcdRegistry) mustCreateNode(key, val string, isDir bool) (err error) {
 	return
 }
 
-func (r *EtcdRegistry) generateProcID() (string, error) {
-	var newProcID string
+func (r *EtcdRegistry) GenerateProcID() (string, error) {
 	for {
-		if resp, err := r.kAPI.Get(r.ctx(), r.prefixed(maxProcessID), &etcd.GetOptions{
-			Quorum: true,
-		}); err != nil {
+		currProcID, err := r.getCurrentProcessID()
+		if err != nil {
 			return "", err
-		} else {
-			newProcID = resp.Node.Value
-			if num, err := strconv.Atoi(newProcID); err != nil {
-				return "", err
-			} else {
-				num++
-				if _, err := r.kAPI.Set(r.ctx(), r.prefixed(maxProcessID), strconv.Itoa(num), &etcd.SetOptions{
-					PrevExist: etcd.PrevExist,
-					PrevValue: newProcID,
-				}); err == nil {
-					// got it
-					break
-				}
-			}
 		}
+		if suc, err := r.tryIncreaseMaxProcessID(currProcID); suc && err == nil {
+			return currProcID, nil
+		} else if err != nil {
+			return "", err
+		}
+		// try failed, next loop
 	}
-	return newProcID, nil
+}
+
+func (r *EtcdRegistry) getCurrentProcessID() (string, error) {
+	ctx, cancel := r.ctx()
+	defer cancel()
+	resp, err := r.kAPI.Get(ctx, r.prefixed(maxProcessID), &etcd.GetOptions{
+		Quorum: true,
+	})
+	if err != nil {
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			panic(fmt.Sprintf("Max-Process-ID not exists in etcd, maybe not normally bootstrapped, %v", err))
+		}
+		return "", err
+	}
+	return resp.Node.Value, nil
+}
+
+func (r *EtcdRegistry) tryIncreaseMaxProcessID(currProcID string) (bool, error) {
+	id, err := strconv.Atoi(currProcID)
+	if err != nil {
+		panic(fmt.Sprintf("Illegal value of Max-Process-ID stored in etcd, %v", err))
+	}
+
+	nextProcID := strconv.Itoa(id + 1)
+
+	ctx, cancel := r.ctx()
+	defer cancel()
+	if _, err := r.kAPI.Set(ctx, r.prefixed(maxProcessID), nextProcID, &etcd.SetOptions{
+		PrevExist: etcd.PrevExist,
+		PrevValue: currProcID,
+	}); err != nil {
+		if isEtcdError(err, etcd.ErrorCodeTestFailed) {
+			// try failed
+			return false, nil
+		}
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			panic(fmt.Sprintf("Max-Process-ID not exists in etcd, maybe not normally bootstrapped, %v", err))
+		}
+		return false, err
+	} else {
+		// success
+		return true, nil
+	}
 }

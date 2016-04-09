@@ -38,15 +38,19 @@ func (ar *AgentReconciler) Run(stopc <-chan struct{}) {
 		case <-stopc:
 			log.Debug("Reconciler is exiting due to stop signal")
 			return
-		case <-ar.clock.After(reconcileInterval):
-			log.Debug("Trigger reconciling from tick")
-			if err := ar.reconcile(); err != nil {
-				log.Errorf("Reconcile failed, %v", err)
+		//case <-ar.clock.After(reconcileInterval):
+		//	log.Debug("Trigger reconciling from tick")
+		//	if err := ar.reconcile(); err != nil {
+		//		log.Errorf("Reconcile failed, %v", err)
+		//	}
+		case event := <-ar.eStream.Next(reconcileInterval):
+			if event.None() {
+				log.Debug("Reconciling is triggered by tick")
+			} else {
+				log.Debugf("Reconciling is triggered by event, %v", event)
 			}
-		case <-ar.eStream.Next(stopc):
-			log.Debug("Trigger reconciling fome etcd watcher")
 			if err := ar.reconcile(); err != nil {
-				log.Errorf("Reconcile failed, %v", err)
+				log.Errorf("Failed to reconcile, %v", err)
 			}
 		}
 	}
@@ -54,13 +58,11 @@ func (ar *AgentReconciler) Run(stopc <-chan struct{}) {
 
 func (ar *AgentReconciler) reconcile() error {
 	start := time.Now()
-
 	toPublish, err := doReconcile(ar.reg, ar.eStream, ar.agent.Mach, ar.agent.ProcMgr)
 	if err != nil {
 		return err
 	}
 	ar.agent.subscribe(toPublish)
-
 	elapsed := time.Now().Sub(start)
 	msg := fmt.Sprintf("Reconciling completed in %s", elapsed)
 	if elapsed > reconcileInterval {
@@ -84,11 +86,12 @@ func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Machine
 		process := procMgr.FindByProcID(procID)
 		if process == nil {
 			// local process not exists, create new one
-			if _, err := procMgr.CreateProcess(procStatus); err != nil {
+			proc, err := procMgr.CreateProcess(procStatus)
+			if err != nil {
 				log.Errorf("Failed to create new local process, %v", procStatus)
 				return toPublish, err
 			}
-			log.Infof("Create new local process successfully, procID: %s", procID)
+			log.Infof("Create local process successfully, procID: %s, with state: %v", procID, proc.State())
 			toPublish = append(toPublish, procID)
 		} else {
 			delete(currentProcesses, procID)

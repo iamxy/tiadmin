@@ -52,7 +52,7 @@ func Init(cfg *config.Config) error {
 	}
 	kAPI := etcd.NewKeysAPI(etcdClient)
 	reg := registry.NewEtcdRegistry(kAPI, cfg.EtcdKeyPrefix, etcdRequestTimeout)
-	eStream := registry.NewEtcdEventStream(kAPI, cfg.EtcdKeyPrefix)
+	es := registry.NewEtcdEventStream(kAPI, cfg.EtcdKeyPrefix)
 
 	// check whether or not the registry is bootstrapped
 	if ok := reg.IsBootstrapped(cfg); !ok {
@@ -63,22 +63,19 @@ func Init(cfg *config.Config) error {
 
 	// register services in cluster
 	svc.RegisterServices()
-
 	// init local processes manager
 	procMgr := proc.NewProcessManager()
-
 	// init this machine
 	mach, err := machine.NewMachineFromConfig(cfg)
 	if err != nil {
 		return err
 	}
-
 	// create agent
 	Agent = agent.New(reg, procMgr, mach, agentTTL)
 
 	// reconciler drives the local process's state towards the desired state
 	// stored in the Registry.
-	Reconciler = agent.NewReconciler(reg, eStream, Agent)
+	Reconciler = agent.NewReconciler(reg, es, Agent)
 	Publisher = agent.NewProcessStatePublisher(reg, Agent, agentTTL)
 	Heartbeat = agent.NewAgentHeartbeat(reg, Agent, agentTTL)
 

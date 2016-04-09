@@ -20,7 +20,9 @@ func (r *EtcdRegistry) Processes() (map[string]*proc.ProcessStatus, error) {
 		Recursive: true,
 		Quorum:    true,
 	}
-	resp, err := r.kAPI.Get(r.ctx(), key, opts)
+	ctx, cancel := r.ctx()
+	defer cancel()
+	resp, err := r.kAPI.Get(ctx, key, opts)
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
 			e := errors.New(fmt.Sprintf("%s not found in etcd, cluster may not be properly bootstrapped", key))
@@ -56,7 +58,9 @@ func (r *EtcdRegistry) Process(procID string) (*proc.ProcessStatus, error) {
 		Recursive: true,
 		Quorum:    true,
 	}
-	resp, err := r.kAPI.Get(r.ctx(), key, opts)
+	ctx, cancel := r.ctx()
+	defer cancel()
+	resp, err := r.kAPI.Get(ctx, key, opts)
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
 			e := errors.New(fmt.Sprintf("Node[%s] not found in etcd, Ti-Cluster may not be properly bootstrapped", key))
@@ -94,7 +98,9 @@ func (r *EtcdRegistry) ProcessesOnMachine(machID string) (map[string]*proc.Proce
 		Recursive: true,
 		Quorum:    true,
 	}
-	resp, err := r.kAPI.Get(r.ctx(), key, opts)
+	ctx, cancel := r.ctx()
+	defer cancel()
+	resp, err := r.kAPI.Get(ctx, key, opts)
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
 			e := errors.New(fmt.Sprintf("Node[%s] not found in etcd, Ti-Cluster may not be properly bootstrapped", key))
@@ -132,7 +138,9 @@ func (r *EtcdRegistry) ProcessesOfService(svcName string) (map[string]*proc.Proc
 		Recursive: true,
 		Quorum:    true,
 	}
-	resp, err := r.kAPI.Get(r.ctx(), key, opts)
+	ctx, cancel := r.ctx()
+	defer cancel()
+	resp, err := r.kAPI.Get(ctx, key, opts)
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
 			e := errors.New(fmt.Sprintf("Node[%s] not found in etcd, Ti-Cluster may not be properly bootstrapped", key))
@@ -232,58 +240,96 @@ func parseProcessState(state string) (proc.ProcessState, error) {
 	}
 }
 
-func (r *EtcdRegistry) UpdateProcessState(procID, machID, svcName string, state proc.ProcessState, isAlive bool, ttl time.Duration) (err error) {
+func (r *EtcdRegistry) UpdateProcessState(procID, machID, svcName string, state proc.ProcessState, isAlive bool, ttl time.Duration) error {
+	// update the current-state of process
+	if err := r.updateProcessCurrentState(procID, machID, svcName, state); err != nil {
+		return err
+	}
+	// update the real alive state of process in etcd
+	return r.refreshProcessAlive(procID, machID, svcName, isAlive, ttl)
+}
+
+func (r *EtcdRegistry) updateProcessCurrentState(procID, machID, svcName string, state proc.ProcessState) error {
 	procKey := strings.Join([]string{procID, machID, svcName}, "-")
 	currentStateKey := r.prefixed(processPrefix, procKey, "current-state")
-	aliveKey := r.prefixed(processPrefix, procKey, "alive")
-
-	// update the current-state of process in etcd
-	_, err = r.kAPI.Set(r.ctx(), currentStateKey, state.String(), &etcd.SetOptions{
+	ctx, cancel := r.ctx()
+	defer cancel()
+	_, err := r.kAPI.Set(ctx, currentStateKey, state.String(), &etcd.SetOptions{
 		PrevValue: state.Opposite().String(),
 		PrevExist: etcd.PrevExist,
 	})
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
-			// maybe process was destroyed
+			// maybe process has been destroyed
 			log.Warnf("Error updating process state of procID: %s, process node is gone, error: %v", procID, err)
-			err = nil // ignore this error
+			return nil
 		} else if isEtcdError(err, etcd.ErrorCodeTestFailed) {
-			log.Debugf("State of process not changed in etcd, procID: %s, state: %s", procID, state.String())
-			err = nil // ignore this error
+			log.Debugf("Process's current-state not changed in etcd, procID: %s, state: %s", procID, state.String())
+			return nil
 		} else {
 			// other errors
-			return
+			return err
 		}
 	}
+	return nil
+}
 
-	// update the real alive state of process in etcd
+func (r *EtcdRegistry) refreshProcessAlive(procID, machID, svcName string, isAlive bool, ttl time.Duration) error {
+	procKey := strings.Join([]string{procID, machID, svcName}, "-")
+	aliveKey := r.prefixed(processPrefix, procKey, "alive")
 	if isAlive {
-		// try to touch alive node of process, update ttl
-		_, err = r.kAPI.Set(r.ctx(), aliveKey, "", &etcd.SetOptions{
-			PrevExist: etcd.PrevExist,
-			TTL:       ttl,
-			Refresh:   true,
-		})
-		if err != nil {
-			if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
-				// create new node
-				_, err = r.kAPI.Set(r.ctx(), aliveKey, "", &etcd.SetOptions{
-					PrevExist: etcd.PrevNoExist,
-					TTL:       ttl,
-				})
-			}
+		// try to touch alive node of process, if node not exists than create it
+		if ok, err := r.touchProcessAlive(aliveKey, ttl); err != nil {
+			return err
+		} else if !ok {
+			// create new node
+			return r.createProcessAlive(aliveKey, ttl)
 		}
 	} else {
 		// delete the alive state of process immediately
-		r.kAPI.Delete(r.ctx(), aliveKey, &etcd.DeleteOptions{})
+		ctx, cancel := r.ctx()
+		defer cancel()
+		_, err := r.kAPI.Delete(ctx, aliveKey, &etcd.DeleteOptions{})
+		if err != nil && !isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			return err
+		}
 	}
-	return
+	return nil
+}
+
+func (r *EtcdRegistry) touchProcessAlive(aliveKey string, ttl time.Duration) (bool, error) {
+	ctx, cancel := r.ctx()
+	defer cancel()
+	_, err := r.kAPI.Set(ctx, aliveKey, "", &etcd.SetOptions{
+		PrevExist: etcd.PrevExist,
+		TTL:       ttl,
+		Refresh:   true,
+	})
+	if err != nil {
+		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *EtcdRegistry) createProcessAlive(aliveKey string, ttl time.Duration) error {
+	ctx, cancel := r.ctx()
+	defer cancel()
+	_, err := r.kAPI.Set(ctx, aliveKey, "", &etcd.SetOptions{
+		TTL: ttl,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *EtcdRegistry) NewProcess(machID, svcName string, hostIP, hostName, hostRegion, hostIDC string,
 	executor []string, command string, args []string, env map[string]string, port pkg.Port, protocol pkg.Protocol) error {
 	// generate new process ID
-	procID, err := r.generateProcID()
+	procID, err := r.GenerateProcID()
 	if err != nil {
 		e := fmt.Sprintf("Failed to generate new process ID, %v", err)
 		log.Error(e)
@@ -356,7 +402,9 @@ func (r *EtcdRegistry) UpdateProcessDesiredState(procID string, state proc.Proce
 		return err
 	}
 	procKey := strings.Join([]string{status.ProcID, status.MachID, status.SvcName}, "-")
-	if _, err := r.kAPI.Set(r.ctx(), r.prefixed(processPrefix, procKey, "desired-state"), state.String(), &etcd.SetOptions{
+	ctx, cancel := r.ctx()
+	defer cancel()
+	if _, err := r.kAPI.Set(ctx, r.prefixed(processPrefix, procKey, "desired-state"), state.String(), &etcd.SetOptions{
 		PrevExist: etcd.PrevExist,
 	}); err != nil {
 		return err
