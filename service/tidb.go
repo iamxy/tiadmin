@@ -14,7 +14,7 @@ func NewTiDBService() Service {
 			svcName:      TiDB_SERVICE,
 			version:      "1.0.0",
 			executor:     []string{},
-			command:      "bin/tidb_server",
+			command:      "tidb-server",
 			args:         []string{"-L", "info", "-path", "/tmp/tidb", "-P", "4000"},
 			environments: map[string]string{},
 		},

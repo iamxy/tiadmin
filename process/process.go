@@ -112,15 +112,10 @@ type Event struct {
 func NewProcess(procID string, svcName string, executor []string, command string, args []string, stdoutFile string,
 	stderrFile string, environment map[string]string, metadata map[string]string, pwd string) (Proc, error) {
 	var root = pkg.GetRootDir()
-
 	var cmd = filepath.Join(root, command)
 	if _, err := pkg.CheckFileExist(cmd); err != nil {
-		cmd = filepath.Join(root, "bin", command)
-		_, err := pkg.CheckFileExist(cmd)
-		if err != nil {
-			e := fmt.Sprintf("The command's binary file not exists in path, %s", cmd)
-			return nil, errors.New(e)
-		}
+		e := fmt.Sprintf("The command's binary file not exists in path, %s", cmd)
+		return nil, errors.New(e)
 	}
 
 	if len(stdoutFile) > 0 || len(stderrFile) > 0 {
@@ -447,13 +442,5 @@ func (pr *ProcessRun) WaitingStoppedInMillisecond(timeout time.Duration) bool {
 		return true
 	case <-time.After(timeout * time.Millisecond):
 		return false
-	}
-}
-
-func OppositeProcessState(state ProcessState) ProcessState {
-	if state == StateStarted {
-		return StateStopped
-	} else {
-		return StateStarted
 	}
 }

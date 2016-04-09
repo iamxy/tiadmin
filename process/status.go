@@ -6,14 +6,22 @@ import (
 
 type ProcessState string
 
-func (s ProcessState) String() string {
-	return string(s)
-}
-
 const (
 	StateStarted = ProcessState("StateStarted")
 	StateStopped = ProcessState("StateStopped")
 )
+
+func (s ProcessState) String() string {
+	return string(s)
+}
+
+func (s ProcessState) Opposite() ProcessState {
+	if s == StateStarted {
+		return StateStopped
+	} else {
+		return StateStarted
+	}
+}
 
 type ProcessStatus struct {
 	ProcID       string

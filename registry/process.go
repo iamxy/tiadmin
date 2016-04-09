@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	etcd "github.com/coreos/etcd/client"
+	"github.com/ngaut/log"
 	"github.com/pingcap/tiadmin/pkg"
 	proc "github.com/pingcap/tiadmin/process"
-	"github.com/prometheus/common/log"
 	"path"
 	"strings"
 	"time"
@@ -239,17 +239,19 @@ func (r *EtcdRegistry) UpdateProcessState(procID, machID, svcName string, state 
 
 	// update the current-state of process in etcd
 	_, err = r.kAPI.Set(r.ctx(), currentStateKey, state.String(), &etcd.SetOptions{
-		PrevValue: proc.OppositeProcessState(state).String(),
+		PrevValue: state.Opposite().String(),
 		PrevExist: etcd.PrevExist,
 	})
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
 			// maybe process was destroyed
 			log.Warnf("Error updating process state of procID: %s, process node is gone, error: %v", procID, err)
-		} else if isEtcdError(err, etcd.ErrorCodePrevValueRequired) {
+			err = nil // ignore this error
+		} else if isEtcdError(err, etcd.ErrorCodeTestFailed) {
 			log.Debugf("State of process not changed in etcd, procID: %s, state: %s", procID, state.String())
+			err = nil // ignore this error
 		} else {
-			// with other errors
+			// other errors
 			return
 		}
 	}
