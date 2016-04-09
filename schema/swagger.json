@@ -572,10 +572,11 @@
         },
         "desiredState": {
           "type": "string",
-          "description": "started, stopped"
+          "description": "stateStarted, stateStopped"
         },
         "currentState": {
-          "type": "string"
+          "type": "string",
+          "description": "stateStarted, stateStopped"
         },
         "isAlive": {
           "type": "boolean"
