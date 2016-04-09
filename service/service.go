@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/coreos/fleet/registry"
+	"github.com/pingcap/tiadmin/registry"
 )
 
 var Registered map[string]Service
