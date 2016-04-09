@@ -23,6 +23,25 @@ angular.module('tiAdminApp')
         refresh();
         setInterval(refresh, 3000);
 
+        // start process
+        $scope.start = function(p) {
+            $http.get("http://localhost:8080/api/v1/processes/" + p.procID + "/start").then(function(resp) {
+                refresh();
+            });
+        };
+
+        $scope.stop = function(p) {
+            $http.get("http://localhost:8080/api/v1/processes/" + p.procID + "/stop").then(function(resp) {
+                refresh();
+            });
+        };
+
+        $scope.delete = function(p) {
+            $http.delete("http://localhost:8080/api/v1/processes/" + p.procID).then(function(resp) {
+                refresh();
+            });
+        };
+
         // new process dialog
         $scope.openNewProcessDialog = function() {
             var modalInstance = $modal.open({
