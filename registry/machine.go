@@ -194,7 +194,9 @@ func (r *EtcdRegistry) RefreshMachine(machID string, machStat machine.MachineSta
 	if err := r.refreshMachineStatistic(machID, &machStat); err != nil {
 		return nil
 	}
-
+	if err := r.refreshMachineAlive(machID, ttl); err != nil {
+		return nil
+	}
 	return nil
 }
 
