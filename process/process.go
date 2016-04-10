@@ -122,7 +122,7 @@ func NewProcess(procID string, svcName string, executor []string, command string
 		var logdir = filepath.Join(root, "logs")
 		if _, err := os.Stat(logdir); err != nil {
 			if err := os.Mkdir(logdir, os.ModePerm); err != nil {
-				e := fmt.Sprintf("Failed to make directory, %s, %v", logdir, err)
+				e := fmt.Sprintf("Failed to create logdir, %s, %v", logdir, err)
 				return nil, errors.New(e)
 			}
 		}

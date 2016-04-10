@@ -1,9 +1,9 @@
 package process
 
 import (
-	"bytes"
 	"io/ioutil"
 	"os"
+	"github.com/glycerine/rbuf"
 )
 
 type LogWriter interface {
@@ -56,12 +56,12 @@ func (flw FileLogWriter) Len() int64 {
 }
 
 type InMemoryLogWriter struct {
-	buffer *bytes.Buffer
+	buffer *rbuf.FixedSizeRingBuf
 }
 
 func NewInMemoryLogWriter() InMemoryLogWriter {
 	imlw := InMemoryLogWriter{}
-	imlw.buffer = new(bytes.Buffer)
+	imlw.buffer = rbuf.NewFixedSizeRingBuf(1024 * 1024 * 2) // 2M size
 	return imlw
 }
 
@@ -70,11 +70,11 @@ func (imlw InMemoryLogWriter) Write(p []byte) (n int, err error) {
 }
 
 func (imlw InMemoryLogWriter) String() string {
-	return imlw.buffer.String()
+	return string(imlw.buffer.Bytes())
 }
 
 func (imlw InMemoryLogWriter) Len() int64 {
-	return int64(imlw.buffer.Len())
+	return int64(imlw.buffer.ContigLen())
 }
 
 func (imlw InMemoryLogWriter) Close() {

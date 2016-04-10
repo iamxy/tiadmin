@@ -44,7 +44,8 @@ func (pm *processManager) CreateProcess(target *ProcessStatus) (Proc, error) {
 	pwd := pkg.GetRootDir()
 	meta := buildProcessMeta(target)
 	if proc, err := NewProcess(target.ProcID, target.SvcName, target.RunInfo.Executor, target.RunInfo.Command,
-		target.RunInfo.Args, "", "", target.RunInfo.Environment, meta, pwd); err == nil {
+		target.RunInfo.Args, "$SERVICE_$PROCID_$RUN.out", "$SERVICE_$PROCID_$RUN.err",
+		target.RunInfo.Environment, meta, pwd); err == nil {
 		if target.DesiredState == StateStarted {
 			if err := proc.Start(); err != nil {
 				log.Errorf("Failed to start local process, procID: %s, error: %v", target.ProcID, err)
