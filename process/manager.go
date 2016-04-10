@@ -37,29 +37,30 @@ func buildProcessMeta(target *ProcessStatus) map[string]string {
 	meta["HOST_IP"] = target.RunInfo.HostIP
 	meta["HOST_REGION"] = target.RunInfo.HostRegion
 	meta["HOST_IDC"] = target.RunInfo.HostIDC
+	meta["SERVICE"] = target.SvcName
 	return meta
 }
 
 func (pm *processManager) CreateProcess(target *ProcessStatus) (Proc, error) {
-	pwd := pkg.GetRootDir()
 	meta := buildProcessMeta(target)
-	if proc, err := NewProcess(target.ProcID, target.SvcName, target.RunInfo.Executor, target.RunInfo.Command,
-		target.RunInfo.Args, "$SERVICE_$PROCID_$RUN.out", "$SERVICE_$PROCID_$RUN.err",
-		target.RunInfo.Environment, meta, pwd); err == nil {
-		if target.DesiredState == StateStarted {
-			if err := proc.Start(); err != nil {
-				log.Errorf("Failed to start local process, procID: %s, error: %v", target.ProcID, err)
-				return nil, err
-			}
-		}
-		pm.rwMutex.Lock()
-		defer pm.rwMutex.Unlock()
-		pm.procs[target.ProcID] = proc
-		return proc, nil
-	} else {
+	// TODO: stdout and stderr filepath should be assigned from client
+	proc, err := NewProcess(target.ProcID, target.SvcName, target.RunInfo.Executor, target.RunInfo.Command, target.RunInfo.Args,
+		"$SERVICE_$PROCID_$RUN.out", "$SERVICE_$PROCID_$RUN.err", target.RunInfo.Environment, meta, pkg.GetRootDir())
+	if err != nil {
 		log.Errorf("Failed to create new local process, procID: %s, error: %v", target.ProcID, err)
 		return nil, err
 	}
+	// if process's desiredstate is 'started', then start it
+	if target.DesiredState == StateStarted {
+		if err := proc.Start(); err != nil {
+			log.Errorf("Failed to start local process, procID: %s, error: %v", target.ProcID, err)
+			return nil, err
+		}
+	}
+	pm.rwMutex.Lock()
+	defer pm.rwMutex.Unlock()
+	pm.procs[target.ProcID] = proc
+	return proc, nil
 }
 
 func (pm *processManager) DestroyProcess(procID string) (err error) {

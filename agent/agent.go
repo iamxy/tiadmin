@@ -36,7 +36,7 @@ func New(reg registry.Registry, pm proc.ProcMgr, m machine.Machine, ttl time.Dur
 		ProcMgr:   pm,
 		Mach:      m,
 		TTL:       ttl,
-		publishch: make(chan []string),
+		publishch: make(chan []string, 10),
 	}
 }
 

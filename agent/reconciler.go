@@ -81,12 +81,12 @@ func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Machine
 		return nil, err
 	}
 	currentProcesses := procMgr.AllProcess()
-	var markers = make(map[string]struct{}, 0)
+	var checked = make(map[string]struct{}, 0)
 
 	for procID, procStatus := range targetProcesses {
 		process, ok := currentProcesses[procID]
 		if ok {
-			markers[procID] = struct{}{}
+			checked[procID] = struct{}{}
 			if procStatus.DesiredState == proc.StateStarted && process.State() == proc.StateStopped {
 				if err := procMgr.StartProcess(procID); err != nil {
 					log.Errorf("Failed to start local process, procID: %s", procID)
@@ -114,7 +114,7 @@ func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Machine
 	}
 
 	for procID, _ := range currentProcesses {
-		if _, ok := markers[procID]; !ok {
+		if _, ok := checked[procID]; !ok {
 			if err := procMgr.DestroyProcess(procID); err != nil {
 				log.Errorf("Failed to destroy local process, procID: %s", procID)
 				return nil, err

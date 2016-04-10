@@ -134,11 +134,6 @@ func NewProcess(procID string, svcName string, executor []string, command string
 		}
 	}
 
-	environment = AddDefaultVars(environment)
-	if _, ok := environment["SERVICE"]; !ok {
-		environment["SERVICE"] = svcName
-	}
-
 	return &Process{
 		ProcID:      procID,
 		SvcName:     svcName,
@@ -161,13 +156,6 @@ func (p *Process) GetProcID() string {
 
 func (p *Process) GetSvcName() string {
 	return p.SvcName
-}
-
-func (p *Process) GetExecutor() string {
-	if len(p.Executor) == 0 {
-		return "/bin/sh -c"
-	}
-	return strings.Join(p.Executor, " ")
 }
 
 func (p *Process) SetActive(pr ProcRun) {
@@ -289,6 +277,7 @@ func (p *Process) NewProcessRun() ProcRun {
 		"PROCID": p.ProcID,
 		"RUN":    strconv.Itoa(run),
 	}
+	vars = AddDefaultVars(vars)
 	if len(p.Pwd) > 0 {
 		vars["PWD"] = p.Pwd
 	}
