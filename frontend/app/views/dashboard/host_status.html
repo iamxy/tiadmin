@@ -7,14 +7,30 @@
     </div>
     <div class="row">
         <div class="col-md-3">
-            <h3>Host Info</h3>
-            <table class="table table-bordered table-striped">
-                <tr ng-repeat="(key, value) in data">
-                    <td>{{ key }}</td>
-                    <td>{{ value }}</td>
+            <table class="table table-bordered">
+                <tr>
+                    <td>Host Meta</td>
+                    <td>{{ host.hostMeta }}</td>
+                </tr>
+                <tr>
+                    <td>Host Name</td>
+                    <td>{{ host.hostName }}</td>
+                </tr>
+                <tr>
+                    <td>Status</td>
+                    <td><label class="label {{ host.isAlive? 'label-success': 'label-warning' }}">{{ host.isAlive? 'Online': 'offline' }}</label></td>
+                </tr>
+                <tr>
+                    <td>IP</td>
+                    <td>{{ host.publicIP }}</td>
                 </tr>
             </table>
-            <!-- /.row -->
+            <table class="table table-bordered">
+                <tr ng-repeat="(key, value) in host.machine">
+                    <td>{{ key }}</td>
+                    <td>{{ value }}</td>
+                </tr> 
+            </table>
            
             <script type="text/ng-template" id="NewProcessModal.html">
                 <div class="modal-header">
@@ -74,9 +90,9 @@
                             <span class="label label-warning" ng-if="p.desiredState == 'StateStarted' && p.currentState == 'StateStopped' && p.isAlive"> Unknown </span>
                         </td>
                         <td class="col-md-4">
-                            <button class="btn btn-success btn-sm" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'" ng-click="start(p)">Start</button>
-                            <button class="btn btn-warning btn-sm" ng-click="stop(p)">Stop</button>
-                            <button class="btn btn-danger btn-sm" ng-click="delete(p)">Delete</button>
+                            <button class="btn btn-success btn-xs" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'" ng-click="start(p)">Start</button>
+                            <button class="btn btn-warning btn-xs" ng-click="stop(p)">Stop</button>
+                            <button class="btn btn-danger btn-xs" ng-click="delete(p)">Delete</button>
                         </td>
                     </tr>
                 </tbody>

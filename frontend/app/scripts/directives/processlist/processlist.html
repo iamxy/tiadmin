@@ -32,9 +32,9 @@
                         <span class="label label-warning" ng-if="p.desiredState == 'StateStarted' && p.currentState == 'StateStopped' && p.isAlive"> Unknown </span>
                     </td>
                     <td class="col-md-4">
-                        <button class="btn btn-default btn-sm" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'" ng-click="start(p)">Start</button>
-                        <button class="btn btn-warning btn-sm" ng-click="stop(p)">Stop</button>
-                        <button class="btn btn-danger btn-sm" ng-click="delete(p)">Delete</button>
+                        <button class="btn btn-default btn-xs" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'" ng-click="start(p)">Start</button>
+                        <button class="btn btn-warning btn-xs" ng-click="stop(p)">Stop</button>
+                        <button class="btn btn-danger btn-xs" ng-click="delete(p)">Delete</button>
                     </td>
                 </tr>
             </tbody>
