@@ -8,12 +8,12 @@
     <div class="row">
         <div class="col-md-3">
             <table class="table table-bordered">
-                <tr><td class="col-md-3"><b>Total Amount</b></td><td> {{ storageInfo.usage }} / {{ storageInfo.capacity }} MB</td></tr>
+                <tr><td class="col-md-4"><b>Total Amount</b></td><td> {{ storageInfo.usage }} / {{ storageInfo.capacity }} MB</td></tr>
                 <tr><td><b>Alive Nodes</b></td><td> {{ numOfNodes }}</td></tr>
             </table>
         </div>
 
-        <div class="col-lg-6">
+        <div class="col-lg-9">
             <nvd3 options='options' data='data'></nvd3>
         </div>
     </div>
@@ -29,9 +29,9 @@
                         </a>
                     </p>
                     <h5>CPU:</h5>
-                    <p>{{ host.machine.usageOfCPU }}%</p>
+                    <p>{{ host.isAlive?  host.machine.usageOfCPU : 0 }}%</p>
                     <h5> Mem Usage:</h5> 
-                    <p>{{ host.machine.usedMem / 1024.0 | number:2 }} GB / {{ host.machine.totalMem / 1024.0 | number:2 }} GB </p>
+                    <p>{{ host.isAlive? (host.machine.usedMem / 1024.0 | number:2) : 0 }} GB / {{ host.isAlive? (host.machine.totalMem / 1024.0 | number:2) : 0 }} GB </p>
                     <h5> Status: </h5>
                     <p> <span class="label {{ host.isAlive? 'label-success' : 'label-warning' }}">{{ host.isAlive? 'Online' : 'Offline' }}</span> </p>
                 </div>

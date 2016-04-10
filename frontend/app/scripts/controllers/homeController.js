@@ -7,7 +7,7 @@
  * Controller of the tiAdminApp
  */
 angular.module('tiAdminApp')
-    .controller('MainCtrl', function($scope, $position, $http) {
+    .controller('HomeCtrl', function($scope, $position, $http) {
         $scope.options = {
             chart: {
                 type: 'lineChart',
@@ -18,10 +18,8 @@ angular.module('tiAdminApp')
                     bottom: 40,
                     left: 55
                 },
-                x: function(d) {
-                    return d.x; },
-                y: function(d) {
-                    return d.y; },
+                x: function(d) { return d.x; },
+                y: function(d) { return d.y; },
                 useInteractiveGuideline: true,
                 duration: 0,
                 //yDomain: [-10, 10],

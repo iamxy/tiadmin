@@ -65,14 +65,14 @@ angular
             })
             .state('dashboard.home', {
                 url: '/home',
-                controller: 'MainCtrl',
+                controller: 'HomeCtrl',
                 templateUrl: 'views/dashboard/home.html',
                 resolve: {
                     loadMyFiles: function($ocLazyLoad) {
                         return $ocLazyLoad.load({
                             name: 'tiAdminApp',
                             files: [
-                                'scripts/controllers/main.js',
+                                'scripts/controllers/homeController.js',
                             ]
                         })
                     }
