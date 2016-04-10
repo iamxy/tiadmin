@@ -14,7 +14,7 @@ angular.module('tiAdminApp')
                 $scope.services = resp.data;
             });
             $http.get("http://localhost:8080/api/v1/hosts/" + $scope.machID).then(function(resp) {
-                $scope.data = resp.data;
+                $scope.host = resp.data;
             });
             $http.get("http://localhost:8080/api/v1/processes/findByHost?machID=" + $scope.machID).then(function(resp) {
                 $scope.processes = resp.data;

@@ -7,7 +7,7 @@
  * Controller of the tiAdminApp
  */
 angular.module('tiAdminApp')
-    .controller('ChartCtrl', ['$scope', '$timeout', function($scope, $timeout) {
+    .controller('ChartCtrl', ['$scope', '$http', '$timeout', function($scope, $http, $timeout) {
         $scope.options = {
             chart: {
                 type: 'lineChart',
@@ -24,7 +24,7 @@ angular.module('tiAdminApp')
                     return d.y; },
                 useInteractiveGuideline: true,
                 duration: 0,
-                yDomain: [-10, 10],
+                //yDomain: [-10, 10],
                 yAxis: {
                     tickFormat: function(d) {
                         return d3.format('.01f')(d);
@@ -33,20 +33,54 @@ angular.module('tiAdminApp')
             }
         };
 
-        $scope.data = [{
+        $scope.tps = [{
             values: [],
-            key: 'Random Walk',
+            key: 'TPS',
         }];
 
-        $scope.run = true;
+        $scope.qps = [{
+            values: [],
+            key: 'QPS',
+        }];
+
+        $scope.iops = [{
+            values: [],
+            key: 'IOPS',
+        }];
+
+        $scope.conns = [{
+            values: [],
+            key: 'Conn Number',
+        }];
 
         var x = 0;
-        setInterval(function() {
-            if (!$scope.run) return;
-            $scope.data[0].values.push({ x: x, y: Math.random() - 0.5 });
-            if ($scope.data[0].values.length > 20) $scope.data[0].values.shift();
-            x++;
+        var refresh = function() {
+            $http.get("http://localhost:8080/api/v1/monitor/real/tidb_perf").then(function(resp) {
+                $scope.tps[0].values.push({ x: x, y: resp.data.tps });
+                if ($scope.tps[0].values.length > 20)
+                    $scope.tps[0].values.shift();
 
-            $scope.$apply(); // update both chart
+                $scope.qps[0].values.push({ x: x, y: resp.data.qps });
+                if ($scope.qps[0].values.length > 20)
+                    $scope.qps[0].values.shift();
+
+                $scope.iops[0].values.push({ x: x, y: resp.data.iops });
+                if ($scope.iops[0].values.length > 20)
+                    $scope.iops[0].values.shift();
+
+                $scope.conns[0].values.push({ x: x, y: resp.data.conns });
+                if ($scope.conns[0].values.length > 20)
+                    $scope.conns[0].values.shift();
+
+                x++;
+            });
+        };
+        refresh();
+
+        setInterval(function() {
+            refresh();
         }, 1000);
+
+
+        
     }]);

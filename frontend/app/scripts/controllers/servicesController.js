@@ -7,8 +7,21 @@
  * Controller of the tiAdminApp
  */
 angular.module('tiAdminApp')
+    .filter('processFilter', function() {
+        return function(items, svcName) {
+            var filtered = [];
+            if (svcName === undefined || svcName === '') {
+                return items;
+            }
+            angular.forEach(items, function(item) {
+                if (svcName === item.svcName) {
+                    filtered.push(item);
+                }
+            });
+            return filtered;
+        };
+    })
     .controller('ServicesController', ['$scope', '$http', '$timeout', '$modal', function($scope, $http, $timeout, $modal) {
-
         var refresh = function() {
             $http.get("http://localhost:8080/api/v1/services").then(function(resp) {
                 $scope.services = resp.data;
