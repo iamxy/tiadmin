@@ -26,7 +26,7 @@
                         <label class="col-sm-3 control-label">Host</label>
                         <div class="col-sm-9">
                             <select class="form-control" ng-model="newProcData.machineID">
-                                <option ng-repeat="host in hosts" value="{{ host.machID }}">{{ host.publicIP }} | MachineID: {{ host.machID }}</option>
+                                <option ng-repeat="host in hosts" ng-if="host.isAlive" value="{{ host.machID }}">{{ host.publicIP }} | MachineID: {{ host.machID }}</option>
                             </select>
                         </div>
                     </div>
