@@ -3,13 +3,11 @@ package machine
 import (
 	"crypto/sha1"
 	"fmt"
-	"github.com/docker/libcontainer/netlink"
 	"github.com/ngaut/log"
 	"github.com/pingcap/tiadmin/config"
 	"github.com/pingcap/tiadmin/pkg"
 	"io"
 	"io/ioutil"
-	"net"
 	"os"
 	"path/filepath"
 	"sync"
@@ -49,7 +47,14 @@ func NewMachineFromConfig(cfg *config.Config) (Machine, error) {
 	if len(cfg.HostIP) > 0 {
 		publicIP = cfg.HostIP
 	} else {
-		publicIP = getLocalIP()
+		if ipaddrs, err := pkg.IntranetIP(); err != nil {
+			return nil, err
+		} else {
+			log.Debugf("Get local IP addr: %v", ipaddrs)
+			if len(ipaddrs) > 0 {
+				publicIP = ipaddrs[0]
+			}
+		}
 	}
 	var hostName string
 	if len(cfg.HostName) > 0 {
@@ -108,59 +113,6 @@ func generateLocalMachineID(fullPath string) (string, error) {
 	}
 	machID := fmt.Sprintf("%X", hash)
 	return machID, nil
-}
-
-func getLocalIP() (got string) {
-	iface := getDefaultGatewayIface()
-	if iface == nil {
-		return
-	}
-	addrs, err := iface.Addrs()
-	if err != nil || len(addrs) == 0 {
-		return
-	}
-	for _, addr := range addrs {
-		// Attempt to parse the address in CIDR notation
-		// and assert that it is IPv4 and global unicast
-		ip, _, err := net.ParseCIDR(addr.String())
-		if err != nil {
-			continue
-		}
-		if !usableAddress(ip) {
-			continue
-		}
-		got = ip.String()
-		break
-	}
-	return
-}
-
-func usableAddress(ip net.IP) bool {
-	return ip.To4() != nil && ip.IsGlobalUnicast()
-}
-
-func getDefaultGatewayIface() *net.Interface {
-	log.Debug("Attempting to retrieve IP route info from netlink")
-	routes, err := netlink.NetworkGetRoutes()
-	if err != nil {
-		log.Debugf("Unable to detect default interface: %v", err)
-		return nil
-	}
-	if len(routes) == 0 {
-		log.Debug("Netlink returned zero routes")
-		return nil
-	}
-	for _, route := range routes {
-		if route.Default {
-			if route.Iface == nil {
-				log.Debugf("Found default route but could not determine interface")
-			}
-			log.Debugf("Found default route with interface %v", route.Iface.Name)
-			return route.Iface
-		}
-	}
-	log.Debugf("Unable to find default route")
-	return nil
 }
 
 func (m *machine) ID() string {

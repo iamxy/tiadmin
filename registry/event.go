@@ -15,8 +15,8 @@ const (
 
 	// Occurs when any Process's target state is touched
 	ProcessTargetStateChangeEvent = pkg.Event("ProcessTargetStateChangeEvent")
-	// Occurs when any Machine's target state is touched
-	MachineTargetStateChangeEvent = pkg.Event("MachineTargetStateChangeEvent")
+	// Occurs when any Machine's state is touched
+	MachineStateChangeEvent = pkg.Event("MachineStateChangeEvent")
 )
 
 type EtcdEventStream struct {
@@ -70,7 +70,7 @@ func parse(res *etcd.Response, prefix string) (ev pkg.Event, ok bool) {
 		ev = ProcessTargetStateChangeEvent
 		ok = true
 	case "machine-state":
-		ev = MachineTargetStateChangeEvent
+		ev = MachineStateChangeEvent
 		ok = true
 	}
 	return
