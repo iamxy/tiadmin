@@ -55,6 +55,9 @@ angular.module('tiAdminApp')
                 $scope.numOfNodes = resp.data.filter(function(x) {
                     return x.isAlive }).length;
             });
+            $http.get("http://localhost:8080/api/v1/monitor/real/tikv_storage").then(function(resp){
+                $scope.storageInfo = resp.data;
+            });
         };
         refreshNodes();
         setInterval(refreshNodes, 3000);
