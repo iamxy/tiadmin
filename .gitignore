@@ -27,7 +27,7 @@ _testmain.go
 /.idea
 .DS_Store
 
-/tiadmin/tiadm
+/tiadmin/tiadmin
 /tiadmin/*.tmp
 /tiadmin/.machineID
 /tiadmin/routers

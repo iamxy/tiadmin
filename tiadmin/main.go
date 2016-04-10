@@ -1,5 +1,3 @@
-package tiadmin
-
 package main
 
 import (
