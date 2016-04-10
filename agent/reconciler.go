@@ -78,46 +78,49 @@ func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Machine
 	toPublish := make([]string, 0)
 	targetProcesses, err := reg.ProcessesOnMachine(mach.ID())
 	if err != nil {
-		return toPublish, err
+		return nil, err
 	}
 	currentProcesses := procMgr.AllProcess()
+	var markers = make(map[string]struct{}, 0)
 
 	for procID, procStatus := range targetProcesses {
-		process := procMgr.FindByProcID(procID)
-		if process == nil {
-			// local process not exists, create new one
-			proc, err := procMgr.CreateProcess(procStatus)
-			if err != nil {
-				log.Errorf("Failed to create new local process, %v", procStatus)
-				return toPublish, err
-			}
-			log.Infof("Create local process successfully, procID: %s, with state: %v", procID, proc.State())
-			toPublish = append(toPublish, procID)
-		} else {
-			delete(currentProcesses, procID)
+		process, ok := currentProcesses[procID]
+		if ok {
+			markers[procID] = struct{}{}
 			if procStatus.DesiredState == proc.StateStarted && process.State() == proc.StateStopped {
 				if err := procMgr.StartProcess(procID); err != nil {
 					log.Errorf("Failed to start local process, procID: %s", procID)
-					return toPublish, err
+					return nil, err
 				}
 				toPublish = append(toPublish, procID)
 			}
 			if procStatus.DesiredState == proc.StateStopped && process.State() == proc.StateStarted {
 				if err := procMgr.StopProcess(procID); err != nil {
 					log.Errorf("Failed to stop local process, procID: %s", procID)
-					return toPublish, err
+					return nil, err
 				}
 				toPublish = append(toPublish, procID)
 			}
+		} else {
+			// local process not exists, create one
+			proc, err := procMgr.CreateProcess(procStatus)
+			if err != nil {
+				log.Errorf("Failed to create new local process, %v", procStatus)
+				return nil, err
+			}
+			log.Infof("Create local process successfully, procID: %s, with state: %v", proc.GetProcID(), proc.State())
+			toPublish = append(toPublish, procID)
 		}
 	}
 
 	for procID, _ := range currentProcesses {
-		if err := procMgr.DestroyProcess(procID); err != nil {
-			log.Errorf("Failed to destroy local process, procID: %s", procID)
-			return toPublish, err
+		if _, ok := markers[procID]; !ok {
+			if err := procMgr.DestroyProcess(procID); err != nil {
+				log.Errorf("Failed to destroy local process, procID: %s", procID)
+				return nil, err
+			}
+			log.Infof("Destroy local process successfully, procID: %s", procID)
 		}
-		//toPublish = append(toPublish, procID)
 	}
 	return toPublish, nil
 }
