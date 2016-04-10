@@ -6,11 +6,13 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
-	"github.com/astaxie/beego/plugins/cors"
+	//"github.com/astaxie/beego/plugins/cors"
 	"github.com/ngaut/log"
 	"github.com/pingcap/tiadmin/config"
 	"github.com/pingcap/tiadmin/schema"
 	"github.com/pingcap/tiadmin/server"
+	"github.com/pingcap/tiadmin/frontend"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 )
 
 func bad_request(rw http.ResponseWriter, r *http.Request) {
@@ -37,12 +39,12 @@ func ServeHttp(cfg *config.Config) {
 
 	beego.ErrorHandler("400", bad_request)
 
-	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
-		AllowOrigins:     []string{"http://localhost:9000"},
-		AllowMethods:     []string{"PUT", "PATCH", "GET", "POST", "DELETE"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-	}))
+	//beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
+	//	AllowOrigins:     []string{"http://localhost:9000"},
+	//	AllowMethods:     []string{"PUT", "PATCH", "GET", "POST", "DELETE"},
+	//	ExposeHeaders:    []string{"Content-Length"},
+	//	AllowCredentials: true,
+	//}))
 
 	if cfg.IsMock {
 		if err := mockRouter(); err != nil {
@@ -54,10 +56,18 @@ func ServeHttp(cfg *config.Config) {
 		}
 		beego.InsertFilter("/*", beego.BeforeRouter, func(ctx *context.Context) {
 			if !server.IsRunning() {
-				ctx.Abort(http.StatusServiceUnavailable, "tiadmin server not ready now")
+				ctx.Abort(http.StatusServiceUnavailable, "tiadmin server is not available")
 			}
 		})
 	}
 
+	// router for static resources
+	beego.Handler("/*", http.FileServer(
+		&assetfs.AssetFS{
+			Asset:     frontend.Asset,
+			AssetDir:  frontend.AssetDir,
+			AssetInfo: frontend.AssetInfo,
+		},
+	))
 	beego.Run()
 }

@@ -24,12 +24,5 @@ _testmain.go
 *.prof
 
 *.iml
-/.idea
+.idea
 .DS_Store
-
-/tiadmin/tiadmin
-/tiadmin/*.tmp
-/tiadmin/.machineID
-/tiadmin/routers
-/tiadmctl/tiadmctl
-/frontend/web-ui.go

@@ -1,8 +1,12 @@
 node_modules
+bower_components
 npm-debug.log
-dist
 .tmp
 .sass-cache
-bower_components
+dist
+*.iml
 .idea
 .DS_Store
+web-ui.go
+*.installed
+*.built
