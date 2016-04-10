@@ -53,11 +53,17 @@ func (a *Agent) StartNewProcess(machID, svcName string, runinfo *proc.ProcessRun
 	var protocol pkg.Protocol
 
 	// retrieve machine infomation from etcd
-	if mach, err := a.Reg.Machine(machID); err == nil && mach != nil {
+	if mach, err := a.Reg.Machine(machID); err == nil {
 		hostIP = mach.MachInfo.PublicIP
 		hostName = mach.MachInfo.HostName
 		hostRegion = mach.MachInfo.HostRegion
 		hostIDC = mach.MachInfo.HostIDC
+		// check if the target machine is offline
+		if !mach.IsAlive {
+			e := fmt.Sprintf("Should not start new processes on a offline host, machID: %s, svcName: %s", machID, svcName)
+			log.Error(e)
+			return errors.New(e)
+		}
 	} else {
 		return err
 	}
