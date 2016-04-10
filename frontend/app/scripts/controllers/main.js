@@ -24,7 +24,7 @@ angular.module('tiAdminApp')
                     return d.y; },
                 useInteractiveGuideline: true,
                 duration: 0,
-                yDomain: [-10, 10],
+                //yDomain: [-10, 10],
                 yAxis: {
                     tickFormat: function(d) {
                         return d3.format('.01f')(d);
@@ -38,17 +38,15 @@ angular.module('tiAdminApp')
             key: 'TPS',
         }];
 
-        $scope.run = true;
 
         var x = 0;
         setInterval(function() {
-            if (!$scope.run)
-                return;
-            $scope.data[0].values.push({ x: x, y: Math.random() - 0.5 });
+          $http.get("http://localhost:8080/api/v1/monitor/real/tidb_perf").then(function(resp) {
+            $scope.data[0].values.push({ x: x, y: resp.data.tps });
             if ($scope.data[0].values.length > 20)
                 $scope.data[0].values.shift();
             x++;
-            $scope.$apply(); // update both chart
+          });
         }, 1000);
 
         var refreshNodes = function() {
