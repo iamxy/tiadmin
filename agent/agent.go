@@ -48,9 +48,8 @@ func (a *Agent) StartNewProcess(machID, svcName string, runinfo *proc.ProcessRun
 	var executor []string
 	var command string
 	var args []string
-	var env map[string]string
-	var port pkg.Port
-	var protocol pkg.Protocol
+	var envs map[string]string
+	var endpoints map[string]pkg.Endpoint
 
 	// retrieve machine infomation from etcd
 	if mach, err := a.Reg.Machine(machID); err == nil {
@@ -86,9 +85,17 @@ func (a *Agent) StartNewProcess(machID, svcName string, runinfo *proc.ProcessRun
 			args = ss.Args
 		}
 		if len(runinfo.Environment) > 0 {
-			env = runinfo.Environment
+			envs = runinfo.Environment
 		} else {
-			env = ss.Environments
+			envs = ss.Environments
+		}
+		if len(ss.Endpoints) > 0 {
+			endpoints = make(map[string]pkg.Endpoint)
+			for k, v := range ss.Endpoints {
+				// TODO: parsing args for endpoint port assigned by user
+				v.IPAddr = hostIP
+				endpoints[k] = v
+			}
 		}
 	} else {
 		e := fmt.Sprintf("Unregistered service: %s", svcName)
@@ -97,7 +104,7 @@ func (a *Agent) StartNewProcess(machID, svcName string, runinfo *proc.ProcessRun
 	}
 
 	if err := a.Reg.NewProcess(machID, svcName, hostIP, hostName, hostRegion, hostIDC,
-		executor, command, args, env, port, protocol); err != nil {
+		executor, command, args, envs, endpoints); err != nil {
 		e := fmt.Sprintf("Create new process failed in etcd, %s, %s, %v", machID, svcName, err)
 		log.Error(e)
 		return errors.New(e)

@@ -8,9 +8,9 @@ import (
 )
 
 type ProcMgr interface {
-	CreateProcess(*ProcessStatus) (Proc, error)
+	CreateProcess(*ProcessStatus, map[string]string) (Proc, error)
 	DestroyProcess(string) error
-	StartProcess(string) error
+	StartProcess(string, map[string]string) error
 	StopProcess(string) error
 	AllProcess() map[string]Proc
 	AllActiveProcess() map[string]Proc
@@ -41,7 +41,7 @@ func buildProcessMeta(target *ProcessStatus) map[string]string {
 	return meta
 }
 
-func (pm *processManager) CreateProcess(target *ProcessStatus) (Proc, error) {
+func (pm *processManager) CreateProcess(target *ProcessStatus, endpoints map[string]string) (Proc, error) {
 	meta := buildProcessMeta(target)
 	// TODO: stdout and stderr filepath should be assigned from client
 	proc, err := NewProcess(target.ProcID, target.SvcName, target.RunInfo.Executor, target.RunInfo.Command, target.RunInfo.Args,
@@ -52,7 +52,7 @@ func (pm *processManager) CreateProcess(target *ProcessStatus) (Proc, error) {
 	}
 	// if process's desiredstate is 'started', then start it
 	if target.DesiredState == StateStarted {
-		if err := proc.Start(); err != nil {
+		if err := proc.Start(endpoints); err != nil {
 			log.Errorf("Failed to start local process, procID: %s, error: %v", target.ProcID, err)
 			return nil, err
 		}
@@ -84,7 +84,7 @@ func (pm *processManager) DestroyProcess(procID string) (err error) {
 	return nil
 }
 
-func (pm *processManager) StartProcess(procID string) error {
+func (pm *processManager) StartProcess(procID string, endpoints map[string]string) error {
 	pm.rwMutex.RLock()
 	proc, ok := pm.procs[procID]
 	pm.rwMutex.RUnlock()
@@ -92,7 +92,7 @@ func (pm *processManager) StartProcess(procID string) error {
 		return errors.New("Failed to start a local process, the procID not exists: " + procID)
 	}
 	if proc.State() == StateStopped {
-		if err := proc.Start(); err != nil {
+		if err := proc.Start(endpoints); err != nil {
 			log.Errorf("Failed to start local process, procID: %s, error: %v", procID, err)
 			return err
 		}

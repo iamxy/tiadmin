@@ -24,7 +24,7 @@ type Proc interface {
 	ProcRuns() []ProcRun
 	NumOfProcRuns() int
 	State() ProcessState
-	Start() error
+	Start(map[string]string) error
 	Stop() error
 }
 
@@ -194,11 +194,11 @@ func (p *Process) setState(state ProcessState) {
 	p.state = state
 }
 
-func (p *Process) Start() error {
+func (p *Process) Start(endpoints map[string]string) error {
 	if p.IsActive() {
 		return errors.New("Process maybe already started")
 	}
-	pr := p.NewProcessRun()
+	pr := p.NewProcessRun(endpoints)
 	if err := pr.Start(); err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func (p *Process) HoldProcRun(pr ProcRun) {
 	p.procRuns = append(p.procRuns, pr)
 }
 
-func (p *Process) NewProcessRun() ProcRun {
+func (p *Process) NewProcessRun(endpoints map[string]string) ProcRun {
 	run := p.NumOfProcRuns()
 	vars := map[string]string{
 		"PROCID": p.ProcID,
@@ -287,8 +287,9 @@ func (p *Process) NewProcessRun() ProcRun {
 	for k, v := range p.Metadata {
 		vars[k] = v
 	}
-
-	// TODO: find all endpoints of services and put into vars here
+	for k, v := range endpoints {
+		vars[k] = v
+	}
 
 	c := make([]string, 0)
 	if len(p.Executor) > 0 {

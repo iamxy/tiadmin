@@ -2,3 +2,5 @@ tiadmin
 *.tmp
 .machineID
 routers
+logs
+tidb-server

@@ -9,5 +9,5 @@ type ServiceStatus struct {
 	Command      string
 	Args         []string
 	Environments map[string]string
-	Endpoints    []pkg.Endpoint
+	Endpoints    map[string]pkg.Endpoint
 }

@@ -25,31 +25,48 @@ func (p Protocol) String() string {
 
 type Endpoint struct {
 	Protocol Protocol
-	// TODO: This should allow hostname or IP
-	IPAddress string
-	Port      Port
+	IPAddr   string
+	Port     Port
 }
 
 func (e Endpoint) String() string {
-	return fmt.Sprintf("%s://%s:%d", e.Protocol, e.IPAddress, e.Port)
+	var ip = "0.0.0.0"
+	if len(e.IPAddr) > 0 {
+		ip = e.IPAddr
+	}
+	if len(e.Protocol) > 0 {
+		return fmt.Sprintf("%s://%s:%d", e.Protocol.String(), ip, e.Port.Value())
+	} else {
+		return fmt.Sprintf("%s:%d", ip, e.Port.Value())
+	}
 }
 
 func ParseEndpoint(str string) (Endpoint, error) {
 	var res Endpoint
 	parts := strings.Split(str, "://")
-	if len(parts) < 2 {
-		return res, errors.New(fmt.Sprintf("Illegal endpoint string: %s", str))
-	}
-	sparts := strings.Split(parts[1], ":")
-	if len(sparts) < 2 {
-		return res, errors.New(fmt.Sprintf("Illegal endpoint string: %s", str))
-	}
-	res.Protocol = Protocol(parts[0])
-	res.IPAddress = sparts[0]
-	if port, err := strconv.Atoi(sparts[1]); err != nil {
-		return res, errors.New(fmt.Sprintf("Illegal endpoint string: %s", str))
+	if len(parts) == 2 {
+		sparts := strings.Split(parts[1], ":")
+		if len(sparts) < 2 {
+			return res, errors.New(fmt.Sprintf("Illegal endpoint string: %s", str))
+		}
+		res.Protocol = Protocol(parts[0])
+		res.IPAddr = sparts[0]
+		if port, err := strconv.Atoi(sparts[1]); err != nil {
+			return res, errors.New(fmt.Sprintf("Illegal endpoint string: %s", str))
+		} else {
+			res.Port = Port(port)
+		}
 	} else {
-		res.Port = Port(port)
+		sparts := strings.Split(parts[0], ":")
+		if len(sparts) < 2 {
+			return res, errors.New(fmt.Sprintf("Illegal endpoint string: %s", str))
+		}
+		res.IPAddr = sparts[0]
+		if port, err := strconv.Atoi(sparts[1]); err != nil {
+			return res, errors.New(fmt.Sprintf("Illegal endpoint string: %s", str))
+		} else {
+			res.Port = Port(port)
+		}
 	}
 	return res, nil
 }
@@ -66,7 +83,7 @@ func ParseEndpoints(slice []string) ([]Endpoint, error) {
 	return res, nil
 }
 
-func EndpointsToStrings(endpoints []Endpoint) []string {
+func EndpointsToStrings(endpoints map[string]Endpoint) []string {
 	res := []string{}
 	for _, ep := range endpoints {
 		res = append(res, ep.String())

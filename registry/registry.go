@@ -14,6 +14,7 @@ import (
 // which always organizes data as directory structure, simlilar to a file system.
 // now we implemented a registry driving ETCD as backend
 type Registry interface {
+	GetEtcdAddrs() string
 	// Check whether tiadmin registry is bootstrapped normally
 	IsBootstrapped(*config.Config) bool
 	// Initialize the basic directory structure of tiadmin registry
@@ -41,7 +42,7 @@ type Registry interface {
 	ProcessesOfService(svcName string) (map[string]*proc.ProcessStatus, error)
 	// Create new process node of specified service in etcd
 	NewProcess(machID, svcName string, hostIP, hostName, hostRegion, hostIDC string,
-		executor []string, command string, args []string, env map[string]string, port pkg.Port, protocol pkg.Protocol) error
+		executor []string, command string, args []string, env map[string]string, endpoints map[string]pkg.Endpoint) error
 	// Destroy the process, normally the process should be in stopped state
 	DeleteProcess(procID string) (*proc.ProcessStatus, error)
 	// Update process desirede state in etcd

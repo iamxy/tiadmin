@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/jonboulle/clockwork"
 	"github.com/ngaut/log"
-	"github.com/pingcap/tiadmin/machine"
 	"github.com/pingcap/tiadmin/pkg"
 	proc "github.com/pingcap/tiadmin/process"
 	"github.com/pingcap/tiadmin/registry"
+	"strings"
 	"time"
 )
 
@@ -58,7 +58,7 @@ func (ar *AgentReconciler) Run(stopc <-chan struct{}) {
 
 func (ar *AgentReconciler) reconcile() error {
 	start := time.Now()
-	toPublish, err := doReconcile(ar.reg, ar.eStream, ar.agent.Mach, ar.agent.ProcMgr)
+	toPublish, err := ar.doReconcile()
 	if err != nil {
 		return err
 	}
@@ -73,29 +73,30 @@ func (ar *AgentReconciler) reconcile() error {
 	return nil
 }
 
-func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Machine, procMgr proc.ProcMgr) ([]string, error) {
-	// collect the procs which state changes and needed to be published to etcd
+func (ar *AgentReconciler) doReconcile() ([]string, error) {
 	toPublish := make([]string, 0)
-	targetProcesses, err := reg.ProcessesOnMachine(mach.ID())
+	allProcesses, err := ar.reg.Processes()
 	if err != nil {
 		return nil, err
 	}
-	currentProcesses := procMgr.AllProcess()
-	var checked = make(map[string]struct{}, 0)
+	targetProcesses, endpoints := filterProcesses(allProcesses, ar.agent.Mach.ID())
+	currentProcesses := ar.agent.ProcMgr.AllProcess()
+	endpoints["ETCD_ADDR"] = ar.reg.GetEtcdAddrs()
 
+	var checked = make(map[string]struct{}, 0)
 	for procID, procStatus := range targetProcesses {
 		process, ok := currentProcesses[procID]
 		if ok {
 			checked[procID] = struct{}{}
 			if procStatus.DesiredState == proc.StateStarted && process.State() == proc.StateStopped {
-				if err := procMgr.StartProcess(procID); err != nil {
+				if err := ar.agent.ProcMgr.StartProcess(procID, endpoints); err != nil {
 					log.Errorf("Failed to start local process, procID: %s", procID)
 					return nil, err
 				}
 				toPublish = append(toPublish, procID)
 			}
 			if procStatus.DesiredState == proc.StateStopped && process.State() == proc.StateStarted {
-				if err := procMgr.StopProcess(procID); err != nil {
+				if err := ar.agent.ProcMgr.StopProcess(procID); err != nil {
 					log.Errorf("Failed to stop local process, procID: %s", procID)
 					return nil, err
 				}
@@ -103,7 +104,7 @@ func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Machine
 			}
 		} else {
 			// local process not exists, create one
-			proc, err := procMgr.CreateProcess(procStatus)
+			proc, err := ar.agent.ProcMgr.CreateProcess(procStatus, endpoints)
 			if err != nil {
 				log.Errorf("Failed to create new local process, %v", procStatus)
 				return nil, err
@@ -115,7 +116,7 @@ func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Machine
 
 	for procID, _ := range currentProcesses {
 		if _, ok := checked[procID]; !ok {
-			if err := procMgr.DestroyProcess(procID); err != nil {
+			if err := ar.agent.ProcMgr.DestroyProcess(procID); err != nil {
 				log.Errorf("Failed to destroy local process, procID: %s", procID)
 				return nil, err
 			}
@@ -123,4 +124,26 @@ func doReconcile(reg registry.Registry, es pkg.EventStream, mach machine.Machine
 		}
 	}
 	return toPublish, nil
+}
+
+func filterProcesses(allProcs map[string]*proc.ProcessStatus, machID string) (map[string]*proc.ProcessStatus, map[string]string) {
+	procsOnMach := make(map[string]*proc.ProcessStatus)
+	temp := make(map[string][]string)
+	for k, v := range allProcs {
+		if v.MachID == machID {
+			procsOnMach[k] = v
+		}
+		for name, ep := range v.RunInfo.Endpoints {
+			if _, ok := temp[name]; ok {
+				temp[name] = append(temp[name], ep.String())
+			} else {
+				temp[name] = []string{ep.String()}
+			}
+		}
+	}
+	endpoints := make(map[string]string)
+	for k, v := range temp {
+		endpoints[k] = strings.Join(v, ",")
+	}
+	return procsOnMach, endpoints
 }

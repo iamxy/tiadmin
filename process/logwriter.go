@@ -1,9 +1,9 @@
 package process
 
 import (
+	"github.com/glycerine/rbuf"
 	"io/ioutil"
 	"os"
-	"github.com/glycerine/rbuf"
 )
 
 type LogWriter interface {

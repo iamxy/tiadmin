@@ -212,18 +212,6 @@ func processStatusFromEtcdNode(procID, machID, svcName string, node *etcd.Node) 
 				log.Errorf("Error unmarshaling RunInfo, procID: %s, %v", procID, err)
 				return nil, err
 			}
-		case "endpoints":
-			for _, epNode := range n.Nodes {
-				if epNode.Value == "ok" {
-					str := path.Base(epNode.Key)
-					if endpoint, err := pkg.ParseEndpoint(str); err == nil {
-						status.Endpoints = append(status.Endpoints, endpoint)
-					} else {
-						log.Errorf("Error parsing endpoint, procID: %s, %v", procID, err)
-						return nil, err
-					}
-				}
-			}
 		}
 	}
 	return status, nil
@@ -327,7 +315,7 @@ func (r *EtcdRegistry) createProcessAlive(aliveKey string, ttl time.Duration) er
 }
 
 func (r *EtcdRegistry) NewProcess(machID, svcName string, hostIP, hostName, hostRegion, hostIDC string,
-	executor []string, command string, args []string, env map[string]string, port pkg.Port, protocol pkg.Protocol) error {
+	executor []string, command string, args []string, env map[string]string, endpoints map[string]pkg.Endpoint) error {
 	// generate new process ID
 	procID, err := r.GenerateProcID()
 	if err != nil {
@@ -347,8 +335,7 @@ func (r *EtcdRegistry) NewProcess(machID, svcName string, hostIP, hostName, host
 		Command:     command,
 		Args:        args,
 		Environment: env,
-		Port:        port,
-		Protocol:    protocol,
+		Endpoints:   endpoints,
 	}
 	if err := r.mustCreateNode(r.prefixed(processPrefix, procKey), "", true); err != nil {
 		e := fmt.Sprintf("Failed to create node of process, %s, %v", procKey, err)
@@ -374,11 +361,6 @@ func (r *EtcdRegistry) NewProcess(machID, svcName string, hostIP, hostName, host
 	} else {
 		e := fmt.Sprintf("Error marshaling RunInfo, %v, %v", object, err)
 		log.Errorf(e)
-		return errors.New(e)
-	}
-	if err := r.createNode(r.prefixed(processPrefix, procKey, "endpoints"), "", true); err != nil {
-		e := fmt.Sprintf("Failed to create endpoints of process node, %s, %v", procKey, err)
-		log.Error(e)
 		return errors.New(e)
 	}
 	return nil

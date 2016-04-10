@@ -30,7 +30,6 @@ type ProcessStatus struct {
 	DesiredState ProcessState
 	CurrentState ProcessState
 	IsAlive      bool
-	Endpoints    []pkg.Endpoint
 	RunInfo      ProcessRunInfo
 }
 
@@ -43,6 +42,5 @@ type ProcessRunInfo struct {
 	Command     string
 	Args        []string
 	Environment map[string]string
-	Port        pkg.Port
-	Protocol    pkg.Protocol
+	Endpoints   map[string]pkg.Endpoint
 }

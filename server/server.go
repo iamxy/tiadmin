@@ -11,6 +11,7 @@ import (
 	proc "github.com/pingcap/tiadmin/process"
 	"github.com/pingcap/tiadmin/registry"
 	svc "github.com/pingcap/tiadmin/service"
+	"strings"
 	"sync"
 	"time"
 )
@@ -34,14 +35,15 @@ func Init(cfg *config.Config) error {
 	if IsRunning() {
 		return errors.New("Not allowed to initialize a running server")
 	}
-
 	agentTTL, err := time.ParseDuration(cfg.AgentTTL)
 	if err != nil {
 		return err
 	}
 
 	// init registry driver of etcd
-	etcdRequestTimeout := time.Duration(cfg.EtcdRequestTimeout) * time.Millisecond
+	etcdAddrs := strings.Join(cfg.EtcdServers, ",")
+	etcdTimeout := time.Duration(cfg.EtcdRequestTimeout) * time.Millisecond
+	etcdPrefix := cfg.EtcdKeyPrefix
 	etcdCfg := etcd.Config{
 		Endpoints: cfg.EtcdServers,
 		Transport: etcd.DefaultTransport,
@@ -51,8 +53,8 @@ func Init(cfg *config.Config) error {
 		return err
 	}
 	kAPI := etcd.NewKeysAPI(etcdClient)
-	reg := registry.NewEtcdRegistry(kAPI, cfg.EtcdKeyPrefix, etcdRequestTimeout)
-	es := registry.NewEtcdEventStream(kAPI, cfg.EtcdKeyPrefix)
+	reg := registry.NewEtcdRegistry(kAPI, etcdPrefix, etcdTimeout, etcdAddrs)
+	es := registry.NewEtcdEventStream(kAPI, etcdPrefix)
 
 	// check whether or not the registry is bootstrapped
 	if ok := reg.IsBootstrapped(cfg); !ok {

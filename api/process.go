@@ -39,8 +39,6 @@ func (c *ProcessController) StartNewProcess() {
 		Command:     body.Command,
 		Args:        body.Args,
 		Environment: transformEnvironmentsToMap(body.Environments),
-		Port:        pkg.Port(body.Port),
-		Protocol:    pkg.Protocol(body.Protocol),
 	}
 	if err := server.Agent.StartNewProcess(body.MachID, body.SvcName, runinfo); err != nil {
 		c.ServeError(500, err.Error())
@@ -152,7 +150,7 @@ func buildProcessModel(s *process.ProcessStatus) *schema.Process {
 		DesiredState: s.DesiredState.String(),
 		CurrentState: s.CurrentState.String(),
 		IsAlive:      s.IsAlive,
-		Endpoints:    pkg.EndpointsToStrings(s.Endpoints),
+		Endpoints:    pkg.EndpointsToStrings(s.RunInfo.Endpoints),
 		Executor:     s.RunInfo.Executor,
 		Command:      s.RunInfo.Command,
 		Args:         s.RunInfo.Args,
@@ -163,8 +161,8 @@ func buildProcessModel(s *process.ProcessStatus) *schema.Process {
 			Region:     s.RunInfo.HostRegion,
 			Datacenter: s.RunInfo.HostIDC,
 		},
-		Port:     s.RunInfo.Port.Value(),
-		Protocol: s.RunInfo.Protocol.String(),
+		Port:     0,
+		Protocol: "",
 	}
 	return p
 }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/pingcap/tiadmin/pkg"
 	"github.com/pingcap/tiadmin/registry"
 )
 
@@ -26,6 +27,7 @@ type service struct {
 	command      string
 	args         []string
 	environments map[string]string
+	endpoints    map[string]pkg.Endpoint
 }
 
 func (s *service) Status() *ServiceStatus {
@@ -36,5 +38,6 @@ func (s *service) Status() *ServiceStatus {
 		Command:      s.command,
 		Args:         s.args,
 		Environments: s.environments,
+		Endpoints:    s.endpoints,
 	}
 }

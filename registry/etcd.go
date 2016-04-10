@@ -16,13 +16,15 @@ type EtcdRegistry struct {
 	kAPI       etcd.KeysAPI
 	keyPrefix  string
 	reqTimeout time.Duration
+	etcdAddrs  string
 }
 
-func NewEtcdRegistry(kapi etcd.KeysAPI, keyPrefix string, reqTimeout time.Duration) Registry {
+func NewEtcdRegistry(kapi etcd.KeysAPI, keyPrefix string, reqTimeout time.Duration, etcdAddrs string) Registry {
 	return &EtcdRegistry{
 		kAPI:       kapi,
 		keyPrefix:  keyPrefix,
 		reqTimeout: reqTimeout,
+		etcdAddrs:  etcdAddrs,
 	}
 }
 
@@ -131,4 +133,8 @@ func (r *EtcdRegistry) tryIncreaseMaxProcessID(currProcID string) (bool, error) 
 		// success
 		return true, nil
 	}
+}
+
+func (r *EtcdRegistry) GetEtcdAddrs() string {
+	return r.etcdAddrs
 }

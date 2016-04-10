@@ -7,12 +7,12 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
 	//"github.com/astaxie/beego/plugins/cors"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/ngaut/log"
 	"github.com/pingcap/tiadmin/config"
+	"github.com/pingcap/tiadmin/frontend"
 	"github.com/pingcap/tiadmin/schema"
 	"github.com/pingcap/tiadmin/server"
-	"github.com/pingcap/tiadmin/frontend"
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 )
 
 func bad_request(rw http.ResponseWriter, r *http.Request) {
