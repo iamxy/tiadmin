@@ -11,6 +11,7 @@ func RegisterServices() {
 	Registered = make(map[string]Service)
 	Registered[TiDB_SERVICE] = NewTiDBService()
 	Registered[PD_SERVICE] = NewPDService()
+	Registered[TiKV_SERVICE] = NewTiKVService()
 }
 
 func RegisterServciesFromEtcd(reg registry.Registry) {
