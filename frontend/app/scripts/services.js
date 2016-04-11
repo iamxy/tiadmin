@@ -21,7 +21,7 @@ angular.module('tiAdminApp')
     .factory('HostService', ['$http', function($http) {
         var hosts = []; 
         var refreshNodes = function() {
-            $http.get("http://localhost:8080/api/v1/hosts").then(function(resp) {
+            $http.get("api/v1/hosts").then(function(resp) {
                 console.log("load hosts");
                 hosts = resp.data
             });

@@ -39,7 +39,7 @@ angular.module('tiAdminApp')
 
         var x = 0;
         setInterval(function() {
-          $http.get("http://localhost:8080/api/v1/monitor/real/tidb_perf").then(function(resp) {
+          $http.get("api/v1/monitor/real/tidb_perf").then(function(resp) {
             $scope.data[0].values.push({ x: x, y: resp.data.tps });
             if ($scope.data[0].values.length > 20)
                 $scope.data[0].values.shift();
@@ -48,12 +48,12 @@ angular.module('tiAdminApp')
         }, 1000);
 
         var refreshNodes = function() {
-            $http.get("http://localhost:8080/api/v1/hosts").then(function(resp) {
+            $http.get("api/v1/hosts").then(function(resp) {
                 $scope.hosts = resp.data;
                 $scope.numOfNodes = resp.data.filter(function(x) {
                     return x.isAlive }).length;
             });
-            $http.get("http://localhost:8080/api/v1/monitor/real/tikv_storage").then(function(resp){
+            $http.get("api/v1/monitor/real/tikv_storage").then(function(resp){
                 $scope.storageInfo = resp.data;
             });
         };
@@ -61,7 +61,7 @@ angular.module('tiAdminApp')
         setInterval(refreshNodes, 3000);
 
         var refreshServices = function() {
-            $http.get("http://localhost:8080/api/v1/services").then(function(resp) {
+            $http.get("api/v1/services").then(function(resp) {
                 $scope.services = resp.data;
             });
         };

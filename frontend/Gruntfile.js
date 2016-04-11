@@ -21,6 +21,10 @@ module.exports = function (grunt) {
     dist: 'dist'
   };
 
+
+  // Load grunt-connect-proxy module to resovle CORS problem in development
+  grunt.loadNpmTasks('grunt-connect-proxy');
+
   // Define the configuration for all the tasks
   grunt.initConfig({
 
@@ -76,10 +80,11 @@ module.exports = function (grunt) {
           open: true,
           middleware: function (connect) {
             return [
+              require('grunt-connect-proxy/lib/utils').proxyRequest,
               connect.static('.tmp'),
               connect().use(
-                '/bower_components',
-                connect.static('./bower_components')
+                  '/bower_components',
+                  connect.static('./bower_components')
               ),
               connect.static(appConfig.app)
             ];
@@ -107,7 +112,15 @@ module.exports = function (grunt) {
           open: true,
           base: '<%= yeoman.dist %>'
         }
-      }
+      },
+      proxies: [
+        {
+          context: '/api/v1',
+          host: 'localhost',
+          port: 8080,
+          changeOrigin: true
+        }
+      ]
     },
 
     // Make sure code styles are up to par and there are no obvious mistakes
@@ -374,6 +387,7 @@ module.exports = function (grunt) {
       'clean:server',
       'concurrent:server',
       'autoprefixer',
+      'configureProxies:server',
       'connect:livereload',
       'watch'
     ]);

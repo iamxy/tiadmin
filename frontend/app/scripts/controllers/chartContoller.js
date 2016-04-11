@@ -55,7 +55,7 @@ angular.module('tiAdminApp')
 
         var x = 0;
         var refresh = function() {
-            $http.get("http://localhost:8080/api/v1/monitor/real/tidb_perf").then(function(resp) {
+            $http.get("api/v1/monitor/real/tidb_perf").then(function(resp) {
                 $scope.tps[0].values.push({ x: x, y: resp.data.tps });
                 if ($scope.tps[0].values.length > 20)
                     $scope.tps[0].values.shift();
