@@ -1,0 +1,88 @@
+package service
+
+import (
+	"flag"
+	"github.com/pingcap/tiadmin/pkg"
+	"strconv"
+	"strings"
+)
+
+const PD_SERVICE = "PD"
+
+type PDService struct {
+	service
+}
+
+func NewPDService() Service {
+	return &PDService{
+		service{
+			svcName:      PD_SERVICE,
+			version:      "1.0.0",
+			executor:     []string{},
+			command:      "target/release/pd-server",
+			args:         []string{"--addr", "$HOST_IP:1234", "--etcd", "$ETCD_ADDR", "--pprof", ":6060", "-L", "debug"},
+			environments: map[string]string{},
+			endpoints: map[string]pkg.Endpoint{
+				"PD_ADDR": pkg.Endpoint{
+					Port: pkg.Port(1234),
+				},
+				"PD_ADVERTISE_ADDR": pkg.Endpoint{
+					Port: pkg.Port(1234),
+				},
+				"PD_PPROF_ADDR": pkg.Endpoint{
+					Port: pkg.Port(6060),
+				},
+			},
+		},
+	}
+}
+
+func (s *PDService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint {
+	res := make(map[string]pkg.Endpoint)
+	argset := flag.NewFlagSet(PD_SERVICE, flag.ExitOnError)
+	argset.String("addr", "127.0.0.1:1234", "server listening address")
+	argset.String("advertise-addr", "", "server advertise listening address [127.0.0.1:1234] for client communication")
+	argset.String("etcd", "127.0.0.1:2379", "Etcd endpoints, separated by comma")
+	argset.String("root", "/pd", "pd root path in etcd")
+	argset.Int64("lease", 3, "Leader lease time (second)")
+	argset.String("L", "debug", "log level: info, debug, warn, error, fatal")
+	argset.String("pprof", ":6060", "pprof HTTP listening address")
+	if err := argset.Parse(args); err != nil {
+		// handle error
+		return s.endpoints
+	}
+
+	for k, v := range s.endpoints {
+		switch k {
+		case "PD_ADDR":
+			if flag := argset.Lookup("addr"); flag != nil {
+				addrParts := strings.Split(flag.Value.String(), ":")
+				if len(addrParts) > 1 {
+					if p, err := strconv.Atoi(addrParts[1]); err != nil {
+						v.Port = pkg.Port(p)
+					}
+				}
+			}
+		case "PD_ADVERTISE_ADDR":
+			if flag := argset.Lookup("advertise-addr"); flag != nil {
+				addrParts := strings.Split(flag.Value.String(), ":")
+				if len(addrParts) > 1 {
+					if p, err := strconv.Atoi(addrParts[1]); err != nil {
+						v.Port = pkg.Port(p)
+					}
+				}
+			}
+		case "PD_PPROF_ADDR":
+			if flag := argset.Lookup("pprof"); flag != nil {
+				addrParts := strings.Split(flag.Value.String(), ":")
+				if len(addrParts) > 1 {
+					if p, err := strconv.Atoi(addrParts[1]); err != nil {
+						v.Port = pkg.Port(p)
+					}
+				}
+			}
+		}
+		res[k] = v
+	}
+	return res
+}
