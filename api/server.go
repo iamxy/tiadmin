@@ -34,7 +34,7 @@ func bad_request(rw http.ResponseWriter, r *http.Request) {
 func ServeHttp(cfg *config.Config) {
 	beego.BConfig.AppName = "tiadmin"
 	beego.BConfig.RunMode = "dev"
-	beego.BConfig.Listen.HTTPPort = 8080
+	beego.BConfig.Listen.HTTPPort = cfg.APIPort
 	beego.BConfig.CopyRequestBody = true
 
 	beego.ErrorHandler("400", bad_request)

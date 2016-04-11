@@ -36,6 +36,7 @@ func main() {
 
 	// Start HTTP server for a set of REST APIs
 	go api.ServeHttp(cfg)
+	log.Info("API server listening at port: %d", cfg.APIPort)
 
 	shutdown := func() {
 		log.Infof("Gracefully shutting down")

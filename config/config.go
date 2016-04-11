@@ -32,6 +32,7 @@ type Config struct {
 	AgentTTL           string
 	TokenLimit         int
 	IsMock             bool
+	APIPort            int
 }
 
 func ParseFlag() (*Config, error) {
@@ -39,13 +40,14 @@ func ParseFlag() (*Config, error) {
 	etcdKeyPrefix := flag.String("etcd-prefix", DefaultKeyPrefix, "Namespace for tiadmin registry in etcd")
 	etcdRequestTimeout := flag.Int("etcd-timeout", 1000, "Amount of time in milliseconds to allow a single etcd request before considering it failed.")
 	monitorInterval := flag.Int("interval", 2000, "Interval at which the monitor should check and report the cluster status in etcd periodically.")
-	hostIP := flag.String("ip", "", "IP address that this host should publish")
+	hostIP := flag.String("ip", "", "IP address which this host advertises")
 	hostName := flag.String("name", "", "The identifier of this machine in cluster")
 	hostRegion := flag.String("region", "", "Geographical region where this machine located")
 	hostIDC := flag.String("idc", "", "The IDC which this machine placed physically")
 	agentTTL := flag.String("ttl", DefaultTTL, "TTL in seconds of machine state in etcd")
 	tokenLimit := flag.Int("limit", 100, "Maximum number of entries per page returned from API requests")
 	isMock := flag.Bool("mock", false, "Whether to privide mock APIs for test")
+	apiPort := flag.Int("api-port", 8080, "Http port for web UI and REST API")
 
 	opts := globalconf.Options{EnvPrefix: EnvConfigPrefix}
 	if file, err := pathToConfigFile(); err == nil {
@@ -69,6 +71,7 @@ func ParseFlag() (*Config, error) {
 		AgentTTL:           *agentTTL,
 		TokenLimit:         *tokenLimit,
 		IsMock:             *isMock,
+		APIPort:            *apiPort,
 	}
 	return cfg, nil
 }

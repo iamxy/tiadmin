@@ -24,7 +24,7 @@ func (r *EtcdRegistry) IsBootstrapped(cfg *config.Config) bool {
 	if err != nil {
 		if isEtcdError(err, etcd.ErrorCodeKeyNotFound) {
 			// not bootstrapped yet
-			log.Infof("The etcd registry not bootstrapped yet")
+			log.Warnf("The etcd registry not bootstrapped yet")
 			return false
 		}
 		log.Fatal(err)

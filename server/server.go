@@ -61,6 +61,7 @@ func Init(cfg *config.Config) error {
 		if err := reg.Bootstrap(); err != nil {
 			log.Fatalf("Bootstarp failed, error: %v", err)
 		}
+		log.Info("Etcd registry bootstrapped successfully")
 	}
 
 	// register services in cluster
