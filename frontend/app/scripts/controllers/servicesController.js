@@ -72,6 +72,15 @@ angular.module('tiAdminApp')
                     $scope.services = services;
                     $scope.hosts = hosts;
                     $scope.newProcData = {};
+                    $scope.getServiceArgs = function(svcName){
+                        var i = $scope.services.length;
+                        while (i--) {
+                            if (svcName == $scope.services[i].svcName) {
+                                return $scope.services[i].args.join(" ")
+                            }
+                        }
+                        return ""
+                    };
 
                     $scope.ok = function() {
                         if ($scope.newProcData.serviceName && $scope.newProcData.machineID) {
@@ -79,6 +88,7 @@ angular.module('tiAdminApp')
                             $http.post("api/v1/processes", {
                                 svcName: $scope.newProcData.serviceName,
                                 machID: $scope.newProcData.machineID,
+                                args: $("#newProcData_args").val().split(" "), // TODO: interim using jquery, to fix it
                                 desiredState: "started"
                             }).then(function(resp) {
                                 refresh();
