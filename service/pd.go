@@ -19,7 +19,7 @@ func NewPDService() Service {
 			svcName:      PD_SERVICE,
 			version:      "1.0.0",
 			executor:     []string{},
-			command:      "target/release/pd-server",
+			command:      "bin/pd-server",
 			args:         []string{"--addr", "$HOST_IP:1234", "--etcd", "$ETCD_ADDR", "--pprof", ":6060", "-L", "debug"},
 			environments: map[string]string{},
 			endpoints: map[string]pkg.Endpoint{

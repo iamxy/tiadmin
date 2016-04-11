@@ -18,8 +18,8 @@ func NewTiDBService() Service {
 			svcName:      TiDB_SERVICE,
 			version:      "1.0.0",
 			executor:     []string{},
-			command:      "target/release/tidb-server",
-			args:         []string{"-L", "info", "-path", "/tmp/tidb", "-P", "4000"},
+			command:      "bin/tidb-server",
+			args:         []string{"-L", "info", "--store", "tikv", "--path", "$ETCD_ADDR/pd?cluster=1", "-P", "4000", "--lease", "1"},
 			environments: map[string]string{},
 			endpoints: map[string]pkg.Endpoint{
 				"TIDB_ADDR": pkg.Endpoint{

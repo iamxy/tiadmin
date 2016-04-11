@@ -19,7 +19,7 @@ func NewTiKVService() Service {
 			svcName:      TiKV_SERVICE,
 			version:      "1.0.0",
 			executor:     []string{},
-			command:      "target/release/tikv-server",
+			command:      "bin/tikv-server",
 			args:         []string{"-S", "raftkv", "--addr", "$HOST_IP:5551", "--pd", "$PD_ADDR", "-s", "data", "--cluster-id", "1", "-L", "debug"},
 			environments: map[string]string{},
 			endpoints: map[string]pkg.Endpoint{
