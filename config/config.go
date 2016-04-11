@@ -79,7 +79,6 @@ func ParseFlag() (*Config, error) {
 func pathToConfigFile() (string, error) {
 	cd := pkg.GetCmdDir()
 	rd := pkg.GetRootDir()
-	wd := pkg.GetWorkDir()
 
 	if path, err := pkg.CheckFileExist(path.Join(cd, DefaultConfigFile)); err == nil {
 		return path, nil
@@ -91,12 +90,6 @@ func pathToConfigFile() (string, error) {
 		return path, nil
 	}
 	if path, err := pkg.CheckFileExist(path.Join(rd, "conf", DefaultConfigFile)); err == nil {
-		return path, nil
-	}
-	if path, err := pkg.CheckFileExist(path.Join(wd, DefaultConfigFile)); err == nil {
-		return path, nil
-	}
-	if path, err := pkg.CheckFileExist(path.Join(wd, "conf", DefaultConfigFile)); err == nil {
 		return path, nil
 	}
 	if path, err := pkg.CheckFileExist(path.Join(DefaultConfigDir, DefaultConfigFile)); err == nil {
