@@ -41,6 +41,19 @@ func (e Endpoint) String() string {
 	}
 }
 
+func TrimAddrs(addrs []string) []string {
+	res := []string{}
+	for _, addr := range addrs {
+		parts := strings.Split(addr, "://")
+		if len(parts) == 2 {
+			res = append(res, parts[1])
+		} else {
+			res = append(res, addr)
+		}
+	}
+	return res
+}
+
 func ParseEndpoint(str string) (Endpoint, error) {
 	var res Endpoint
 	parts := strings.Split(str, "://")

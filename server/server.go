@@ -8,6 +8,7 @@ import (
 	"github.com/pingcap/tiadmin/agent"
 	"github.com/pingcap/tiadmin/config"
 	"github.com/pingcap/tiadmin/machine"
+	"github.com/pingcap/tiadmin/pkg"
 	proc "github.com/pingcap/tiadmin/process"
 	"github.com/pingcap/tiadmin/registry"
 	svc "github.com/pingcap/tiadmin/service"
@@ -41,7 +42,7 @@ func Init(cfg *config.Config) error {
 	}
 
 	// init registry driver of etcd
-	etcdAddrs := strings.Join(cfg.EtcdServers, ",")
+	etcdAddrs := strings.Join(pkg.TrimAddrs(cfg.EtcdServers), ",")
 	etcdTimeout := time.Duration(cfg.EtcdRequestTimeout) * time.Millisecond
 	etcdPrefix := cfg.EtcdKeyPrefix
 	etcdCfg := etcd.Config{
