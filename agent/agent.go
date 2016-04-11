@@ -49,7 +49,7 @@ func (a *Agent) StartNewProcess(machID, svcName string, runinfo *proc.ProcessRun
 	var command string
 	var args []string
 	var envs map[string]string
-	var endpoints map[string]pkg.Endpoint
+	var endpoints = map[string]pkg.Endpoint{}
 
 	// retrieve machine infomation from etcd
 	if mach, err := a.Reg.Machine(machID); err == nil {
@@ -89,13 +89,10 @@ func (a *Agent) StartNewProcess(machID, svcName string, runinfo *proc.ProcessRun
 		} else {
 			envs = ss.Environments
 		}
-		if len(ss.Endpoints) > 0 {
-			endpoints = make(map[string]pkg.Endpoint)
-			for k, v := range ss.Endpoints {
-				// TODO: parsing args for endpoint port assigned by user
-				v.IPAddr = hostIP
-				endpoints[k] = v
-			}
+		parsedEndpoints := svc.ParseEndpointFromArgs(args)
+		for k, v := range parsedEndpoints {
+			v.IPAddr = hostIP
+			endpoints[k] = v
 		}
 	} else {
 		e := fmt.Sprintf("Unregistered service: %s", svcName)

@@ -57,11 +57,8 @@ func ParseFlag() (*Config, error) {
 		return nil, err
 	}
 
-	var etcdEndpoints pkg.StringSlice
-	etcdEndpoints.Set(*etcdServers)
-
 	cfg := &Config{
-		EtcdServers:        etcdEndpoints,
+		EtcdServers:        pkg.NewStringSlice(*etcdServers),
 		EtcdKeyPrefix:      *etcdKeyPrefix,
 		EtcdRequestTimeout: *etcdRequestTimeout,
 		MonitorInterval:    *monitorInterval,

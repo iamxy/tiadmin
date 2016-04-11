@@ -18,6 +18,7 @@ func RegisterServciesFromEtcd(reg registry.Registry) {
 
 type Service interface {
 	Status() *ServiceStatus
+	ParseEndpointFromArgs([]string) map[string]pkg.Endpoint
 }
 
 type service struct {

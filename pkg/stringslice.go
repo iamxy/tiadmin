@@ -1,31 +1,25 @@
 package pkg
 
 import (
-	"fmt"
 	"strings"
 )
 
 type StringSlice []string
 
-func (f *StringSlice) Set(value string) error {
-	var s StringSlice
+func NewStringSlice(value string) StringSlice {
+	var s = []string{}
 	for _, item := range strings.Split(value, ",") {
 		item = strings.TrimLeft(item, " [\"")
 		item = strings.TrimRight(item, " \"]")
 		s = append(s, item)
 	}
-	*f = s
-	return nil
+	return StringSlice(s)
 }
 
-func (f *StringSlice) String() string {
-	return fmt.Sprintf("%v", *f)
+func (f StringSlice) String() string {
+	return strings.Join(f.Value(), ",")
 }
 
-func (f *StringSlice) Value() []string {
-	return *f
-}
-
-func (f *StringSlice) Get() interface{} {
-	return *f
+func (f StringSlice) Value() []string {
+	return []string(f)
 }

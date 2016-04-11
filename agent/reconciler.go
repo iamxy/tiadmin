@@ -79,7 +79,7 @@ func (ar *AgentReconciler) doReconcile() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	targetProcesses, endpoints := filterProcesses(allProcesses, ar.agent.Mach.ID())
+	targetProcesses, endpoints := prepareProcesses(allProcesses, ar.agent.Mach.ID())
 	currentProcesses := ar.agent.ProcMgr.AllProcess()
 	endpoints["ETCD_ADDR"] = ar.reg.GetEtcdAddrs()
 
@@ -126,7 +126,7 @@ func (ar *AgentReconciler) doReconcile() ([]string, error) {
 	return toPublish, nil
 }
 
-func filterProcesses(allProcs map[string]*proc.ProcessStatus, machID string) (map[string]*proc.ProcessStatus, map[string]string) {
+func prepareProcesses(allProcs map[string]*proc.ProcessStatus, machID string) (map[string]*proc.ProcessStatus, map[string]string) {
 	procsOnMach := make(map[string]*proc.ProcessStatus)
 	temp := make(map[string][]string)
 	for k, v := range allProcs {
