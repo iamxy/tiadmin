@@ -79,6 +79,7 @@ func (ar *AgentReconciler) doReconcile() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	ar.agent.SaveProcsToCache(allProcesses)
 	targetProcesses, endpoints := prepareProcesses(allProcesses, ar.agent.Mach.ID())
 	currentProcesses := ar.agent.ProcMgr.AllProcess()
 	endpoints["ETCD_ADDR"] = ar.reg.GetEtcdAddrs()

@@ -9,15 +9,18 @@ import (
 	proc "github.com/pingcap/tiadmin/process"
 	"github.com/pingcap/tiadmin/registry"
 	"github.com/pingcap/tiadmin/service"
+	"sync"
 	"time"
 )
 
 type Agent struct {
-	Reg       registry.Registry
-	ProcMgr   proc.ProcMgr
-	Mach      machine.Machine
-	TTL       time.Duration
-	publishch chan []string
+	Reg        registry.Registry
+	ProcMgr    proc.ProcMgr
+	Mach       machine.Machine
+	TTL        time.Duration
+	publishch  chan []string
+	procsCache map[string]*proc.ProcessStatus
+	cacheMutex sync.RWMutex
 }
 
 func (a *Agent) subscribe(procIDs []string) {
@@ -30,13 +33,26 @@ func (a *Agent) publish() chan []string {
 	return a.publishch
 }
 
+func (a *Agent) SaveProcsToCache(procs map[string]*proc.ProcessStatus) {
+	a.cacheMutex.Lock()
+	defer a.cacheMutex.Unlock()
+	a.procsCache = procs
+}
+
+func (a *Agent) GetProcsFomeCache() map[string]*proc.ProcessStatus {
+	a.cacheMutex.RLock()
+	defer a.cacheMutex.RUnlock()
+	return a.procsCache
+}
+
 func New(reg registry.Registry, pm proc.ProcMgr, m machine.Machine, ttl time.Duration) *Agent {
 	return &Agent{
-		Reg:       reg,
-		ProcMgr:   pm,
-		Mach:      m,
-		TTL:       ttl,
-		publishch: make(chan []string, 10),
+		Reg:        reg,
+		ProcMgr:    pm,
+		Mach:       m,
+		TTL:        ttl,
+		publishch:  make(chan []string, 10),
+		procsCache: make(map[string]*proc.ProcessStatus),
 	}
 }
 
@@ -189,4 +205,15 @@ func (a *Agent) BirthCry() error {
 		return err
 	}
 	return nil
+}
+
+func (a *Agent) ShowTiDBRealPerfermance() *service.TiDBPerfMetrics {
+	// fetch a list of all processes exists in Ti-Cluster from agent's cache, which updated since last reconciling
+	var cachedProcs = a.GetProcsFomeCache()
+	if cachedProcs == nil {
+		// no process exists in Ti-Cluster, or the agent just started a moment ago
+		return &service.TiDBPerfMetrics{}
+	}
+	tidbService := service.Registered[service.TiDB_SERVICE].(*service.TiDBService)
+	return tidbService.RetrieveRealPerformance(cachedProcs)
 }

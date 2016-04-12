@@ -60,7 +60,7 @@ func (p *ProcessStatePublisher) doPublish(pub []string) error {
 
 func (p *ProcessStatePublisher) doPublishAll() error {
 	for procID, process := range p.agent.ProcMgr.AllProcess() {
-		log.Debugf("Public local process's state to etcd, procID: %s", procID)
+		log.Debugf("Publish local process's state to etcd, procID: %s", procID)
 		if err := p.reg.UpdateProcessState(procID, p.agent.Mach.ID(), process.GetSvcName(), process.State(),
 			process.IsActive(), p.ttl); err != nil {
 			return err

@@ -11,3 +11,9 @@ type ServiceStatus struct {
 	Environments map[string]string
 	Endpoints    map[string]pkg.Endpoint
 }
+
+type TiDBPerfMetrics struct {
+	TPS         int64  `json:"tps"`
+	Connections int    `json:"connections"`
+	Version     string `json:"version"`
+}

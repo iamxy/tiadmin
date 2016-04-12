@@ -1,9 +1,15 @@
 package service
 
 import (
+	"encoding/json"
 	"flag"
+	"github.com/ngaut/log"
 	"github.com/pingcap/tiadmin/pkg"
+	proc "github.com/pingcap/tiadmin/process"
+	"io/ioutil"
+	"net/http"
 	"strconv"
+	"time"
 )
 
 const TiDB_SERVICE = "TiDB"
@@ -36,7 +42,7 @@ func NewTiDBService() Service {
 }
 
 func (s *TiDBService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint {
-	res := make(map[string]pkg.Endpoint)
+	var res = make(map[string]pkg.Endpoint)
 	argset := flag.NewFlagSet(TiDB_SERVICE, flag.ExitOnError)
 	argset.String("store", "goleveldb", "registered store name, [memory, goleveldb, hbase, boltdb, tikv]")
 	argset.String("path", "/tmp/tidb", "tidb storage path")
@@ -67,4 +73,52 @@ func (s *TiDBService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoi
 		res[k] = v
 	}
 	return res
+}
+
+func (s *TiDBService) RetrieveRealPerformance(allProcesses map[string]*proc.ProcessStatus) *TiDBPerfMetrics {
+	var res = &TiDBPerfMetrics{}
+	for _, proc := range allProcesses {
+		if proc.SvcName != TiDB_SERVICE || !proc.IsAlive {
+			continue
+		}
+		if endpoint, ok := proc.RunInfo.Endpoints["TIDB_STATUS_ADDR"]; ok {
+			if status, err := s.fetchTiDBStatusFromHttp(endpoint); err == nil {
+				// accumulating
+				res.Connections += status.Connections
+				res.TPS += status.TPS
+			}
+		}
+	}
+	return res
+}
+
+func (s *TiDBService) fetchTiDBStatusFromHttp(addr pkg.Endpoint) (*TiDBPerfMetrics, error) {
+	url := addr.String() + "/status"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Warnf("Fetch TiDB status error while building http request, %v", err)
+		return nil, err
+	}
+	req.Header.Add("cache-control", "no-cache")
+	req.Header.Add("postman-token", "e5d36c00-595e-d099-7966-97dd984afbd7")
+	client := &http.Client{
+		Timeout: time.Duration(1) * time.Second,
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		log.Warnf("Fetch TiDB status error while doing http request, %v", err)
+		return nil, err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Warnf("Fetch TiDB status error while reading response body, %v", err)
+		return nil, err
+	}
+	var status = &TiDBPerfMetrics{}
+	if err := json.Unmarshal(body, status); err != nil {
+		log.Warnf("Fetch TiDB status error while unmarshal response body, %v", err)
+		return nil, err
+	}
+	return status, nil
 }

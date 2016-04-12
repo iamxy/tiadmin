@@ -32,7 +32,7 @@ func NewTiKVService() Service {
 }
 
 func (s *TiKVService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint {
-	res := make(map[string]pkg.Endpoint)
+	var res = make(map[string]pkg.Endpoint)
 	argset := flag.NewFlagSet(TiKV_SERVICE, flag.ExitOnError)
 	argset.String("S", "raftkv", "")
 	argset.String("addr", "127.0.0.1:5551", "")

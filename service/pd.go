@@ -38,7 +38,7 @@ func NewPDService() Service {
 }
 
 func (s *PDService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint {
-	res := make(map[string]pkg.Endpoint)
+	var res = make(map[string]pkg.Endpoint)
 	argset := flag.NewFlagSet(PD_SERVICE, flag.ExitOnError)
 	argset.String("addr", "127.0.0.1:1234", "server listening address")
 	argset.String("advertise-addr", "", "server advertise listening address [127.0.0.1:1234] for client communication")
