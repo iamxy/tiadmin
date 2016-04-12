@@ -70,16 +70,24 @@ func buildHostModel(s *machine.MachineStatus) *schema.Host {
 		IsAlive:  s.IsAlive,
 		Machine: schema.Machine{
 			MachID:      s.MachID,
-			UsageOfCPU:  s.MachStat.UsageOfCPU,
-			TotalMem:    s.MachStat.TotalMem,
-			UsedMem:     s.MachStat.UsedMem,
-			TotalSwp:    s.MachStat.TotalSwp,
-			UsedSwp:     s.MachStat.UsedMem,
-			LoadAvg:     s.MachStat.LoadAvg,
+			UsageOfCPU:  int32(s.MachStat.UsageOfCPU),
+			TotalMem:    int32(s.MachStat.TotalMem),
+			UsedMem:     int32(s.MachStat.UsedMem),
+			TotalSwp:    int32(s.MachStat.TotalSwp),
+			UsedSwp:     int32(s.MachStat.UsedMem),
+			LoadAvg:     transformLoadAvg(s.MachStat.LoadAvg),
 			UsageOfDisk: transformDiskUsage(s.MachStat.UsageOfDisk),
 		},
 	}
 	return h
+}
+
+func transformLoadAvg(loads []float64) []float32 {
+	res := []float32{}
+	for _, load := range loads {
+		res = append(res, float32(load))
+	}
+	return res
 }
 
 func transformDiskUsage(disks []machine.DiskUsage) []schema.DiskUsage {
@@ -87,8 +95,8 @@ func transformDiskUsage(disks []machine.DiskUsage) []schema.DiskUsage {
 	for _, disk := range disks {
 		res = append(res, schema.DiskUsage{
 			Mount:     disk.Mount,
-			TotalSize: disk.TotalSize,
-			UsedSize:  disk.UsedSize,
+			TotalSize: int32(disk.TotalSize),
+			UsedSize:  int32(disk.UsedSize),
 		})
 	}
 	return res

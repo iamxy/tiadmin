@@ -12,4 +12,5 @@ func (c *VersionController) VersionInfo() {
 		Version:      "1.0.0",
 		BuildUTCTime: "2016-01-19 08:12:47",
 	}
+	c.ServeJSON()
 }

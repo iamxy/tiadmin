@@ -55,6 +55,7 @@ type Process struct {
 
 type ProcessRun struct {
 	ID          int
+	Commandline string
 	Cmd         *exec.Cmd
 	Error       error
 	Started     time.Time
@@ -300,12 +301,11 @@ func (p *Process) NewProcessRun(endpoints map[string]string) ProcRun {
 		c = append(c, ReplaceVars(arg, vars))
 	}
 
-	var cmd *exec.Cmd
-	cmd = exec.Command(c[0], c[1:]...)
 	pr := &ProcessRun{
 		ID:          run,
 		Events:      make([]*Event, 0),
-		Cmd:         cmd,
+		Commandline: strings.Join(c, " "),
+		Cmd:         exec.Command(c[0], c[1:]...),
 		ProcID:      p.ProcID,
 		SvcName:     p.SvcName,
 		StdoutFile:  ReplaceVars(p.StdoutFile, vars),
@@ -382,7 +382,8 @@ func (pr *ProcessRun) Start() error {
 		return pr.Error
 	}
 
-	ev := &Event{time.Now(), fmt.Sprintf("Process %s[%s] started as PID: %d", pr.SvcName, pr.ProcID, pr.Cmd.Process.Pid)}
+	ev := &Event{time.Now(), fmt.Sprintf("Process %s[%s] started successfully, commandline: %s, PID: %d",
+		pr.SvcName, pr.ProcID, pr.Commandline, pr.Cmd.Process.Pid)}
 	log.Info(ev.Message)
 	pr.Events = append(pr.Events, ev)
 

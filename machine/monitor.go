@@ -3,7 +3,6 @@ package machine
 import (
 	"github.com/jonboulle/clockwork"
 	"github.com/ngaut/log"
-	"math/rand"
 	"time"
 )
 
@@ -20,30 +19,28 @@ func (m *machine) Monitor(stopc <-chan struct{}) {
 			log.Debug("Machine monitor is exiting due to stop signal")
 			return
 		case <-clock.After(monitorInterval):
-			log.Debug("Trigger monitor routine after tick")
-			if err := m.collect(); err != nil {
-				log.Errorf("Collect statistics of this machine failed, %v", err)
-			}
+			// log.Debug("Trigger monitor routine after tick")
+			m.collect()
+			//if err := m.collect(); err != nil {
+			//	log.Errorf("Collect statistics of this machine failed, %v", err)
+			//}
 		}
 	}
 }
 
-func randInt(min int, max int) int32 {
-	return int32(min + rand.Intn(max-min))
-}
-
-func (m *machine) collect() error {
+func (m *machine) collect() {
+	memInfo := memInfo()
+	load := loadAvg()
 	stat := &MachineStat{
-		UsageOfCPU:  randInt(0, 100),
-		TotalMem:    1024 * 8,
-		UsedMem:     randInt(1140, 4600),
-		TotalSwp:    0,
-		UsedSwp:     0,
-		LoadAvg:     []float32{1.04, 1.46, 1.31},
-		UsageOfDisk: []DiskUsage{},
+		UsageOfCPU:  100.0 - cpuIdle(),
+		TotalMem:    memInfo.memFree + memInfo.memUsed,
+		UsedMem:     memInfo.memUsed,
+		TotalSwp:    memInfo.swapFree + memInfo.swapUsed,
+		UsedSwp:     memInfo.swapUsed,
+		LoadAvg:     []float64{load.Avg1min, load.Avg5min, load.Avg15min},
+		UsageOfDisk: diskInfo(),
 	}
 	m.rwMutex.Lock()
 	defer m.rwMutex.Unlock()
 	m.stat = stat
-	return nil
 }

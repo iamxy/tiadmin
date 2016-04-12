@@ -15,17 +15,17 @@ type MachineInfo struct {
 }
 
 type MachineStat struct {
-	UsageOfCPU  int32
-	TotalMem    int32
-	UsedMem     int32
-	TotalSwp    int32
-	UsedSwp     int32
-	LoadAvg     []float32
+	UsageOfCPU  float64
+	TotalMem    uint64
+	UsedMem     uint64
+	TotalSwp    uint64
+	UsedSwp     uint64
+	LoadAvg     []float64
 	UsageOfDisk []DiskUsage
 }
 
 type DiskUsage struct {
 	Mount     string
-	TotalSize int32
-	UsedSize  int32
+	TotalSize uint64
+	UsedSize  uint64
 }

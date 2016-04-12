@@ -70,7 +70,7 @@ func NewMachineFromConfig(cfg *config.Config) (Machine, error) {
 		hostIDC:    cfg.HostIDC,
 		publicIP:   publicIP,
 		stat: &MachineStat{
-			LoadAvg:     []float32{},
+			LoadAvg:     []float64{},
 			UsageOfDisk: []DiskUsage{},
 		},
 	}

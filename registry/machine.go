@@ -157,8 +157,8 @@ func (r *EtcdRegistry) createMachine(machID, hostName, hostRegion, hostIDC, publ
 		UsedMem:     0,
 		TotalSwp:    0,
 		UsedSwp:     0,
-		LoadAvg:     make([]float32, 0),
-		UsageOfDisk: make([]machine.DiskUsage, 0),
+		LoadAvg:     []float64{},
+		UsageOfDisk: []machine.DiskUsage{},
 	}
 	if err := r.mustCreateNode(r.prefixed(machinePrefix, machID), "", true); err != nil {
 		e := fmt.Sprintf("Failed to create node of machine, %s, %v", machID, err)
