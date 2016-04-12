@@ -29,14 +29,15 @@ func (m *machine) Monitor(stopc <-chan struct{}) {
 }
 
 func (m *machine) collect() {
+	updateCpuStat()
 	memInfo := memInfo()
 	load := loadAvg()
 	stat := &MachineStat{
 		UsageOfCPU:  100.0 - cpuIdle(),
-		TotalMem:    memInfo.memFree + memInfo.memUsed,
-		UsedMem:     memInfo.memUsed,
-		TotalSwp:    memInfo.swapFree + memInfo.swapUsed,
-		UsedSwp:     memInfo.swapUsed,
+		TotalMem:    (memInfo.memFree + memInfo.memUsed) / 1024 / 1024,
+		UsedMem:     memInfo.memUsed / 1024 / 1024,
+		TotalSwp:    (memInfo.swapFree + memInfo.swapUsed) / 1024 / 1024,
+		UsedSwp:     memInfo.swapUsed / 1024 / 1024,
 		LoadAvg:     []float64{load.Avg1min, load.Avg5min, load.Avg15min},
 		UsageOfDisk: diskInfo(),
 	}
@@ -44,3 +45,5 @@ func (m *machine) collect() {
 	defer m.rwMutex.Unlock()
 	m.stat = stat
 }
+
+

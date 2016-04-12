@@ -14,6 +14,22 @@ var (
 	psLock          = new(sync.RWMutex)
 )
 
+func updateCpuStat() error {
+	ps, err := nux.CurrentProcStat()
+	if err != nil {
+		return err
+	}
+
+	psLock.Lock()
+	defer psLock.Unlock()
+	for i := historyCount - 1; i > 0; i-- {
+		procStatHistory[i] = procStatHistory[i-1]
+	}
+
+	procStatHistory[0] = ps
+	return nil
+}
+
 func deltaTotal() uint64 {
 	if procStatHistory[1] == nil {
 		return 0
