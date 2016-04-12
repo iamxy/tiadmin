@@ -1,6 +1,9 @@
 package api
 
-import "github.com/pingcap/tiadmin/schema"
+import (
+	"github.com/pingcap/tiadmin/schema"
+	"github.com/pingcap/tiadmin/server"
+)
 
 type MonitorController struct {
 	baseController
@@ -8,11 +11,12 @@ type MonitorController struct {
 
 func (c *MonitorController) TiDBPerformanceMetrics() {
 	// TODO: implement it
+	var status = server.Agent.ShowTiDBRealPerfermance()
 	c.Data["json"] = schema.PerfMetrics{
-		Tps:   int32(randInt(20, 100)),
-		Qps:   int32(randInt(65, 300)),
-		Iops:  int32(randInt(80, 550)),
-		Conns: int32(randInt(3, 10)),
+		Tps:   int32(status.TPS),
+		Qps:   int32(0),
+		Iops:  int32(0),
+		Conns: int32(status.Connections),
 	}
 	c.ServeJSON()
 }
