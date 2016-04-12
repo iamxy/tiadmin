@@ -45,5 +45,3 @@ func (m *machine) collect() {
 	defer m.rwMutex.Unlock()
 	m.stat = stat
 }
-
-

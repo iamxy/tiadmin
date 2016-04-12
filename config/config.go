@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"flag"
+	"github.com/ngaut/log"
 	"github.com/pingcap/tiadmin/pkg"
 	"github.com/rakyll/globalconf"
 	"path"
@@ -33,6 +34,7 @@ type Config struct {
 	TokenLimit         int
 	IsMock             bool
 	APIPort            int
+	LogLevel           string
 }
 
 func ParseFlag() (*Config, error) {
@@ -48,6 +50,7 @@ func ParseFlag() (*Config, error) {
 	tokenLimit := flag.Int("limit", 100, "Maximum number of entries per page returned from API requests")
 	isMock := flag.Bool("mock", false, "Whether to privide mock APIs for test")
 	apiPort := flag.Int("api-port", 8080, "Http port for web UI and REST API")
+	logLevel := flag.String("log-level", "debug", "log level: info, debug, warn, error, fatal")
 
 	opts := globalconf.Options{EnvPrefix: EnvConfigPrefix}
 	if file, err := pathToConfigFile(); err == nil {
@@ -58,6 +61,8 @@ func ParseFlag() (*Config, error) {
 	} else {
 		return nil, err
 	}
+
+	log.SetLevelByString(*logLevel)
 
 	cfg := &Config{
 		EtcdServers:        pkg.NewStringSlice(*etcdServers),
@@ -72,6 +77,7 @@ func ParseFlag() (*Config, error) {
 		TokenLimit:         *tokenLimit,
 		IsMock:             *isMock,
 		APIPort:            *apiPort,
+		LogLevel:           *logLevel,
 	}
 	return cfg, nil
 }
