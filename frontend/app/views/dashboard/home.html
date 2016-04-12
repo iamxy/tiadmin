@@ -60,7 +60,7 @@
                         </tr>
                         <tr>
                             <td>Endpoints</td>
-                            <td><li ng-repeat="e in service.endpoints">{{ e }}</li></td>
+                            <td><li ng-repeat="e in service.endpoints track by $index">{{ e }}</li></td>
                         </tr>
                         <tr>
                             <td>Version</td>
