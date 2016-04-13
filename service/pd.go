@@ -58,7 +58,7 @@ func (s *PDService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint
 			if flag := argset.Lookup("addr"); flag != nil {
 				addrParts := strings.Split(flag.Value.String(), ":")
 				if len(addrParts) > 1 {
-					if p, err := strconv.Atoi(addrParts[1]); err != nil {
+					if p, err := strconv.Atoi(addrParts[1]); err == nil {
 						v.Port = pkg.Port(p)
 					}
 				}
@@ -67,7 +67,7 @@ func (s *PDService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint
 			if flag := argset.Lookup("advertise-addr"); flag != nil {
 				addrParts := strings.Split(flag.Value.String(), ":")
 				if len(addrParts) > 1 {
-					if p, err := strconv.Atoi(addrParts[1]); err != nil {
+					if p, err := strconv.Atoi(addrParts[1]); err == nil {
 						v.Port = pkg.Port(p)
 					}
 				}
@@ -76,7 +76,7 @@ func (s *PDService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint
 			if flag := argset.Lookup("pprof"); flag != nil {
 				addrParts := strings.Split(flag.Value.String(), ":")
 				if len(addrParts) > 1 {
-					if p, err := strconv.Atoi(addrParts[1]); err != nil {
+					if p, err := strconv.Atoi(addrParts[1]); err == nil {
 						v.Port = pkg.Port(p)
 					}
 				}

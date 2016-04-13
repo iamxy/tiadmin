@@ -59,13 +59,13 @@ func (s *TiDBService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoi
 		switch k {
 		case "TIDB_ADDR":
 			if flag := argset.Lookup("P"); flag != nil {
-				if p, err := strconv.Atoi(flag.Value.String()); err != nil {
+				if p, err := strconv.Atoi(flag.Value.String()); err == nil {
 					v.Port = pkg.Port(p)
 				}
 			}
 		case "TIDB_STATUS_ADDR":
 			if flag := argset.Lookup("status"); flag != nil {
-				if p, err := strconv.Atoi(flag.Value.String()); err != nil {
+				if p, err := strconv.Atoi(flag.Value.String()); err == nil {
 					v.Port = pkg.Port(p)
 				}
 			}

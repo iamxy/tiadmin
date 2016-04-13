@@ -15,9 +15,9 @@ func memInfo() *Mem {
 	if err != nil {
 		return res
 	}
-	res.memFree = mem.MemFree + mem.Buffers + mem.Cached
-	res.memUsed = mem.MemTotal - res.memFree
-	res.swapUsed = mem.SwapUsed
-	res.swapFree = mem.SwapFree
+	res.memFree = (mem.MemFree + mem.Buffers + mem.Cached) / 1024 / 1024
+	res.memUsed = (mem.MemTotal - res.memFree) / 1024 / 1024
+	res.swapUsed = mem.SwapUsed / 1024 / 1024
+	res.swapFree = mem.SwapFree / 1024 / 1024
 	return res
 }
