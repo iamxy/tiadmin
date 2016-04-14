@@ -52,10 +52,22 @@ angular.module('tiAdminApp')
                 $scope.hosts = resp.data;
                 $scope.numOfNodes = resp.data.filter(function(x) {
                     return x.isAlive }).length;
+                var total = 0;
+                var used = 0;
+                resp.data.filter(function(x) {
+                    for (var ud in x.machine.usageOfDisk) {
+                        total += ud.totalSize;
+                        used += ud.usedSize;
+                    }
+                });
+                $scope.storageInfo = {
+                    usage: used,
+                    capacity: total
+                }
             });
-            $http.get("api/v1/monitor/real/tikv_storage").then(function(resp){
-                $scope.storageInfo = resp.data;
-            });
+            //$http.get("api/v1/monitor/real/tikv_storage").then(function(resp){
+            //    $scope.storageInfo = resp.data;
+            //});
         };
         refreshNodes();
         setInterval(refreshNodes, 3000);

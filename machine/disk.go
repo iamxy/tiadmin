@@ -16,8 +16,8 @@ func diskInfo() []DiskUsage {
 		if err == nil {
 			res = append(res, DiskUsage{
 				Mount:     du.FsFile,
-				TotalSize: du.BlocksAll / 1024,
-				UsedSize:  du.BlocksUsed / 1024,
+				TotalSize: du.BlocksAll / 1024 / 1024,
+				UsedSize:  du.BlocksUsed / 1024 / 1024,
 			})
 		}
 	}

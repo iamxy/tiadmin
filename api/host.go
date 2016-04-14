@@ -74,7 +74,7 @@ func buildHostModel(s *machine.MachineStatus) *schema.Host {
 			TotalMem:    int32(s.MachStat.TotalMem),
 			UsedMem:     int32(s.MachStat.UsedMem),
 			TotalSwp:    int32(s.MachStat.TotalSwp),
-			UsedSwp:     int32(s.MachStat.UsedMem),
+			UsedSwp:     int32(s.MachStat.UsedSwp),
 			LoadAvg:     transformLoadAvg(s.MachStat.LoadAvg),
 			UsageOfDisk: transformDiskUsage(s.MachStat.UsageOfDisk),
 		},

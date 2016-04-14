@@ -49,7 +49,7 @@
 <!-- /.row -->
 <h3>Services</h3>
 <div class="row">
-    <div class="col-md-3" ng-repeat="service in services | orderBy : 'svcName'">
+    <div class="col-md-4" ng-repeat="service in services | orderBy : 'svcName'">
         <div class="panel panel-default">
             <div class="panel-heading">
                 <i class="fa fa-sitemap fa-3"></i> &nbsp;
@@ -123,9 +123,9 @@
                                 <span class="label label-warning" ng-if="p.desiredState == 'StateStarted' && p.currentState == 'StateStopped' && p.isAlive"> Unknown </span>
                             </td>
                             <td class="col-md-1">
-                                <button class="btn btn-success btn-xs" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'" ng-click="start(p)">Start</button>
-                                <button class="btn btn-warning btn-xs" ng-if="p.desiredState == 'StateStarted' && p.currentState == 'StateStarted'" ng-click="stop(p)">Stop</button>
-                                <button class="btn btn-danger btn-xs" ng-click="delete(p)">Delete</button>
+                                <button class="btn btn-success btn-xs btn-block" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'" ng-click="start(p)">Start</button>
+                                <button class="btn btn-warning btn-xs btn-block" ng-if="p.desiredState == 'StateStarted' && p.currentState == 'StateStarted'" ng-click="stop(p)">Stop</button>
+                                <button class="btn btn-danger btn-xs btn-block" ng-click="delete(p)">Delete</button>
                             </td>
                         </tr>
                     </tbody>
@@ -184,9 +184,9 @@
                         <span class="label label-warning" ng-if="p.desiredState == 'StateStarted' && p.currentState == 'StateStopped' && p.isAlive"> Unknown </span>
                     </td>
                     <td>
-                        <button class="btn btn-success btn-xs" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'" ng-click="start(p)">Start</button>
-                        <button class="btn btn-warning btn-xs" ng-if="p.desiredState == 'StateStarted' && p.currentState == 'StateStarted'" ng-click="stop(p)">Stop</button>
-                        <button class="btn btn-danger btn-xs" ng-click="delete(p)">Delete</button>
+                        <button class="btn btn-success btn-xs btn-block" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'" ng-click="start(p)">Start</button>
+                        <button class="btn btn-warning btn-xs btn-block" ng-if="p.desiredState == 'StateStarted' && p.currentState == 'StateStarted'" ng-click="stop(p)">Stop</button>
+                        <button class="btn btn-danger btn-xs btn-block" ng-click="delete(p)">Delete</button>
                     </td>
                 </tr>
             </tbody>
