@@ -6,7 +6,7 @@
         <!-- /.col-lg-12 -->
     </div>
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <table class="table table-bordered">
                 <tr>
                     <td>Host Meta</td>
@@ -62,7 +62,7 @@
         </div>
     </div>
     <div class="row" ng-if="host.isAlive">
-        <div class="col-lg-8">
+        <div class="col-lg-12">
             <h3>Process</h3>
             <p>
                 <button class="btn btn-success" ng-click="openNewProcessDialog()">Create New Process</button>
@@ -81,7 +81,7 @@
                     <tr ng-repeat="p in processes | orderBy: '-procID'">
                         <td class="col-md-1">{{ p.svcName }}</td>
                         <td class="col-md-1">{{ p.procID }}</td>
-                        <td class="col-md-1">{{ p.command }}</td>
+                        <td class="col-md-2">{{ p.command }}</td>
                         <td class="col-md-3">{{ p.args.join(' ') }}</td>
                         <td class="col-md-3">
                             <li ng-repeat="endpoint in p.endpoints track by $index">{{ endpoint }}</li>
@@ -94,7 +94,7 @@
                             <span class="label label-warning" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'"> Stopped </span>
                             <span class="label label-warning" ng-if="p.desiredState == 'StateStarted' && p.currentState == 'StateStopped' && p.isAlive"> Unknown </span>
                         </td>
-                        <td class="col-md-4">
+                        <td class="col-md-1">
                             <button class="btn btn-success btn-xs btn-block" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'" ng-click="start(p)">Start</button>
                             <button class="btn btn-warning btn-xs btn-block" ng-click="stop(p)">Stop</button>
                             <button class="btn btn-danger btn-xs btn-block" ng-click="delete(p)">Delete</button>

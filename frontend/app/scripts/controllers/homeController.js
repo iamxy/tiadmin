@@ -55,9 +55,11 @@ angular.module('tiAdminApp')
                 var total = 0;
                 var used = 0;
                 resp.data.filter(function(x) {
-                    for (var ud in x.machine.usageOfDisk) {
-                        total += ud.totalSize;
-                        used += ud.usedSize;
+                    if (x.machine && x.machine.usageOfDisk) {
+                        x.machine.usageOfDisk.forEach(function(e) {
+                            total += e.totalSize;
+                            used += e.usedSize;
+                        });
                     }
                 });
                 $scope.storageInfo = {
