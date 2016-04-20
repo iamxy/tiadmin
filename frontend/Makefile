@@ -47,4 +47,3 @@ $(GOBINDATA_TARGET): $(GO_BINDATA) $(DIST)
 .PHONY: clean
 clean:
 	rm -rf $(DIST)
-	rm -rf $(GOBINDATA_TARGET)

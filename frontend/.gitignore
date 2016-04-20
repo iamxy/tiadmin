@@ -4,9 +4,5 @@ npm-debug.log
 .tmp
 .sass-cache
 dist
-*.iml
-.idea
 .DS_Store
-web-ui.go
 *.installed
-*.built
