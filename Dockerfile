@@ -1,4 +1,4 @@
-FROM go-rust:latest
+FROM pingcap/go-rust:latest
 
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 RUN mkdir -p /deploy/bin /deploy/logs /deploy/data
