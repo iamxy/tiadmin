@@ -20,7 +20,7 @@ RUN git clone https://github.com/pingcap/tidb.git /go/src/github.com/pingcap/tid
 
 # pd
 RUN cd /go/src/github.com/pingcap/pd \
-    && go build -o bin/pd-server pd-server/main.go \
+    && make build \
     && cp bin/pd-server /deploy/bin/pd-server
 
 # tikv
