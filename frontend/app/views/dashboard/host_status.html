@@ -96,7 +96,7 @@
                         </td>
                         <td class="col-md-1">
                             <button class="btn btn-success btn-xs btn-block" ng-if="p.desiredState == 'StateStopped' && p.currentState == 'StateStopped'" ng-click="start(p)">Start</button>
-                            <button class="btn btn-warning btn-xs btn-block" ng-click="stop(p)">Stop</button>
+                            <button class="btn btn-warning btn-xs btn-block" ng-if="p.desiredState == 'StateStarted' && p.currentState == 'StateStarted'" ng-click="stop(p)">Stop</button>
                             <button class="btn btn-danger btn-xs btn-block" ng-click="delete(p)">Delete</button>
                         </td>
                     </tr>
