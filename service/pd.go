@@ -20,7 +20,7 @@ func NewPDService() Service {
 			version:      "1.0.0",
 			executor:     []string{},
 			command:      "bin/pd-server",
-			args:         []string{"--addr", "$HOST_IP:1234", "--etcd", "$ETCD_ADDR", "--pprof", ":6060", "-L", "debug", "--cluster-id", "1"},
+			args:         []string{"--addr", "0.0.0.0:1234", "--advertise-addr", "$HOST_IP:1234", "--etcd", "$ETCD_ADDR", "--pprof", ":6060", "-L", "debug", "--cluster-id", "1"},
 			environments: map[string]string{},
 			endpoints: map[string]pkg.Endpoint{
 				"PD_ADDR": pkg.Endpoint{
