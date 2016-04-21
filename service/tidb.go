@@ -43,7 +43,7 @@ func NewTiDBService() Service {
 
 func (s *TiDBService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint {
 	var res = make(map[string]pkg.Endpoint)
-	argset := flag.NewFlagSet(TiDB_SERVICE, flag.ExitOnError)
+	argset := flag.NewFlagSet(TiDB_SERVICE, flag.ContinueOnError)
 	argset.String("store", "goleveldb", "registered store name, [memory, goleveldb, hbase, boltdb, tikv]")
 	argset.String("path", "/tmp/tidb", "tidb storage path")
 	argset.String("L", "debug", "log level: info, debug, warn, error, fatal")

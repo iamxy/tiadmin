@@ -20,7 +20,7 @@ func NewPDService() Service {
 			version:      "1.0.0",
 			executor:     []string{},
 			command:      "bin/pd-server",
-			args:         []string{"--addr", "$HOST_IP:1234", "--etcd", "$ETCD_ADDR", "--pprof", ":6060", "-L", "debug"},
+			args:         []string{"--addr", "$HOST_IP:1234", "--etcd", "$ETCD_ADDR", "--pprof", ":6060", "-L", "debug", "--cluster-id", "1"},
 			environments: map[string]string{},
 			endpoints: map[string]pkg.Endpoint{
 				"PD_ADDR": pkg.Endpoint{
@@ -39,7 +39,7 @@ func NewPDService() Service {
 
 func (s *PDService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint {
 	var res = make(map[string]pkg.Endpoint)
-	argset := flag.NewFlagSet(PD_SERVICE, flag.ExitOnError)
+	argset := flag.NewFlagSet(PD_SERVICE, flag.ContinueOnError)
 	argset.String("addr", "127.0.0.1:1234", "server listening address")
 	argset.String("advertise-addr", "", "server advertise listening address [127.0.0.1:1234] for client communication")
 	argset.String("etcd", "127.0.0.1:2379", "Etcd endpoints, separated by comma")
@@ -47,6 +47,7 @@ func (s *PDService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint
 	argset.Int64("lease", 3, "Leader lease time (second)")
 	argset.String("L", "debug", "log level: info, debug, warn, error, fatal")
 	argset.String("pprof", ":6060", "pprof HTTP listening address")
+	argset.Uint64("cluster-id", 0, "Cluster ID")
 	if err := argset.Parse(args); err != nil {
 		// handle error
 		return s.endpoints
