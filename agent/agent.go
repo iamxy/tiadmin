@@ -107,7 +107,9 @@ func (a *Agent) StartNewProcess(machID, svcName string, runinfo *proc.ProcessRun
 		}
 		parsedEndpoints := svc.ParseEndpointFromArgs(args)
 		for k, v := range parsedEndpoints {
-			v.IPAddr = hostIP
+			if len(v.IPAddr) == 0 {
+				v.IPAddr = hostIP
+			}
 			endpoints[k] = v
 		}
 	} else {

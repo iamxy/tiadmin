@@ -68,6 +68,7 @@ func (s *PDService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint
 			if flag := argset.Lookup("advertise-addr"); flag != nil {
 				addrParts := strings.Split(flag.Value.String(), ":")
 				if len(addrParts) > 1 {
+					v.IPAddr = addrParts[0]
 					if p, err := strconv.Atoi(addrParts[1]); err == nil {
 						v.Port = pkg.Port(p)
 					}
