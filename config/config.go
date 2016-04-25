@@ -40,7 +40,7 @@ type Config struct {
 func ParseFlag() (*Config, error) {
 	etcdServers := flag.String("etcd", "http://127.0.0.1:2379,http://127.0.0.1:4001", "List of etcd endpoints, default 'http://127.0.0.1:2379'")
 	etcdKeyPrefix := flag.String("etcd-prefix", DefaultKeyPrefix, "Namespace for tiadmin registry in etcd")
-	etcdRequestTimeout := flag.Int("etcd-timeout", 1000, "Amount of time in milliseconds to allow a single etcd request before considering it failed.")
+	etcdRequestTimeout := flag.Int("etcd-timeout", 2500, "Amount of time in milliseconds to allow a single etcd request before considering it failed.")
 	monitorInterval := flag.Int("interval", 2000, "Interval at which the monitor should check and report the cluster status in etcd periodically.")
 	hostIP := flag.String("ip", "", "IP address which this host advertises")
 	hostName := flag.String("name", "", "The identifier of this machine in cluster")

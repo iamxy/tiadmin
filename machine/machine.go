@@ -15,7 +15,8 @@ import (
 
 const (
 	shortIDLen    = 8
-	machineIDFile = ".machineID"
+	machineDir    = ".machine"
+	machineIDFile = "machineID"
 )
 
 type Machine interface {
@@ -84,9 +85,9 @@ func IsLocalMachineID(mID string) bool {
 }
 
 func readLocalMachineID() (string, error) {
-	fullPath := filepath.Join(pkg.GetRootDir(), machineIDFile)
+	fullPath := filepath.Join(pkg.GetRootDir(), machineDir, machineIDFile)
 	if _, err := pkg.CheckFileExist(fullPath); err != nil {
-		return generateLocalMachineID(fullPath)
+		return generateLocalMachineID()
 	} else {
 		// read the machine ID from file
 		hash, err := ioutil.ReadFile(fullPath)
@@ -95,20 +96,32 @@ func readLocalMachineID() (string, error) {
 		}
 		machID := fmt.Sprintf("%X", hash)
 		if len(machID) == 0 {
-			return generateLocalMachineID(fullPath)
+			return generateLocalMachineID()
 		}
 		return machID, nil
 	}
 }
 
 // generate a new machine ID, and save it to file
-func generateLocalMachineID(fullPath string) (string, error) {
-	t := sha1.New()
+func generateLocalMachineID() (string, error) {
 	rand64 := string(pkg.KRand(64, pkg.KC_RAND_KIND_ALL))
-	log.Debugf("Generated a string of 64 rand bytes, %s", rand64)
+	log.Debugf("Generated a randomized string with 64 runes, %s", rand64)
+	t := sha1.New()
 	io.WriteString(t, rand64)
 	hash := t.Sum(nil)
-	if err := ioutil.WriteFile(fullPath, hash, os.ModePerm); err != nil {
+
+	dir := filepath.Join(pkg.GetRootDir(), machineDir)
+	if _, err := os.Stat(dir); err != nil {
+		if os.IsNotExist(err) {
+			// dir not exists, mkdir it
+			if err := os.Mkdir(dir, os.ModePerm); err != nil {
+				return "", err
+			}
+		}
+	}
+
+	file := filepath.Join(dir, machineIDFile)
+	if err := ioutil.WriteFile(file, hash, os.ModePerm); err != nil {
 		return "", err
 	}
 	machID := fmt.Sprintf("%X", hash)

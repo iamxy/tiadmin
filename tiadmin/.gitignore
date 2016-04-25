@@ -1,6 +1,6 @@
 tiadmin
 *.tmp
-.machineID
+/.machine
 routers
 logs
 tidb-server
