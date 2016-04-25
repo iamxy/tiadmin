@@ -21,7 +21,7 @@ func NewTiKVService() Service {
 			version:      "1.0.0",
 			executor:     []string{},
 			command:      "bin/tikv-server",
-			args:         []string{"-S", "raftkv", "--addr", "0.0.0.0:5551", "--advertise-addr", "$HOST_IP:5551", "--pd", "$PD_ADVERTISE_ADDR", "--store", "data", "--cluster-id", "1", "-L", "debug"},
+			args:         []string{"-S", "raftkv", "--addr", "0.0.0.0:5551", "--advertise-addr", "$HOST_IP:5551", "--pd", "$PD_ADVERTISE_ADDR", "--store", "data", "--cluster-id", "1"},
 			environments: map[string]string{},
 			endpoints: map[string]pkg.Endpoint{
 				"TIKV_ADDR": pkg.Endpoint{
