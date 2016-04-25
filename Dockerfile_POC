@@ -13,8 +13,6 @@ RUN cd /go/src/github.com/pingcap/tiadmin/tiadmin \
 
 # tidb
 RUN git clone https://github.com/pingcap/tidb.git /go/src/github.com/pingcap/tidb \
-	&& git clone https://github.com/golang/snappy.git /go/src/github.com/golang/snappy \
-	&& git -C /go/src/github.com/golang/snappy checkout 17e435849f9b5cc7818817bb6e1d5c002f486fef \
     && cd /go/src/github.com/pingcap/tidb \
     && make godep && make parser && make server \
     && cp tidb-server/tidb-server /deploy/bin/tidb-server \
