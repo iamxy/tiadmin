@@ -112,11 +112,12 @@ func generateLocalMachineID() (string, error) {
 
 	dir := filepath.Join(pkg.GetRootDir(), machineDir)
 	if _, err := os.Stat(dir); err != nil {
-		if os.IsNotExist(err) {
-			// dir not exists, mkdir it
-			if err := os.Mkdir(dir, os.ModePerm); err != nil {
-				return "", err
-			}
+		if !os.IsNotExist(err) {
+			return "", err
+		}
+		// dir not exists, make it
+		if err := os.Mkdir(dir, os.ModePerm); err != nil {
+			return "", err
 		}
 	}
 
