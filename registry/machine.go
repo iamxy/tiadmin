@@ -152,13 +152,14 @@ func (r *EtcdRegistry) createMachine(machID, hostName, hostRegion, hostIDC, publ
 		PublicIP:   publicIP,
 	}
 	statobj := &machine.MachineStat{
-		UsageOfCPU:  0,
+		UsageOfCPU:  0.0,
 		TotalMem:    0,
 		UsedMem:     0,
 		TotalSwp:    0,
 		UsedSwp:     0,
 		LoadAvg:     []float64{},
 		UsageOfDisk: []machine.DiskUsage{},
+		ClockOffset: 0.0,
 	}
 	if err := r.mustCreateNode(r.prefixed(machinePrefix, machID), "", true); err != nil {
 		e := fmt.Sprintf("Failed to create node of machine, %s, %v", machID, err)

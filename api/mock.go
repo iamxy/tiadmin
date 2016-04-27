@@ -19,16 +19,17 @@ var (
 			IsAlive:  true,
 			Machine: schema.Machine{
 				MachID:     "106001",
-				UsageOfCPU: 56,
+				UsageOfCPU: 56.0,
 				TotalMem:   4096,
 				UsedMem:    1543,
 				TotalSwp:   6010,
 				UsedSwp:    4307,
-				LoadAvg:    []float32{1.23, 1.67, 1.15},
+				LoadAvg:    []float64{1.23, 1.67, 1.15},
 				UsageOfDisk: []schema.DiskUsage{
 					{Mount: "/export", TotalSize: 102400, UsedSize: 5120},
 					{Mount: "/", TotalSize: 8192, UsedSize: 578},
 				},
+				ClockOffset: 0.74123,
 			},
 		},
 		"107001": {
@@ -39,16 +40,17 @@ var (
 			IsAlive:  true,
 			Machine: schema.Machine{
 				MachID:     "107001",
-				UsageOfCPU: 12,
+				UsageOfCPU: 12.0,
 				TotalMem:   16384,
 				UsedMem:    7893,
 				TotalSwp:   11034,
 				UsedSwp:    2290,
-				LoadAvg:    []float32{1.58, 1.91, 1.75},
+				LoadAvg:    []float64{1.58, 1.91, 1.75},
 				UsageOfDisk: []schema.DiskUsage{
 					{Mount: "/data", TotalSize: 51200, UsedSize: 38491},
 					{Mount: "/", TotalSize: 20480, UsedSize: 7128},
 				},
+				ClockOffset: -1.31273,
 			},
 		},
 		"108001": {
@@ -59,16 +61,17 @@ var (
 			IsAlive:  false,
 			Machine: schema.Machine{
 				MachID:     "108001",
-				UsageOfCPU: 0,
+				UsageOfCPU: 0.0,
 				TotalMem:   16384,
 				UsedMem:    0,
 				TotalSwp:   8319,
 				UsedSwp:    0,
-				LoadAvg:    []float32{0, 0, 0},
+				LoadAvg:    []float64{0, 0, 0},
 				UsageOfDisk: []schema.DiskUsage{
 					{Mount: "/export", TotalSize: 204800, UsedSize: 138910},
 					{Mount: "/", TotalSize: 10240, UsedSize: 5549},
 				},
+				ClockOffset: -4.76123,
 			},
 		},
 		"109001": {
@@ -79,16 +82,17 @@ var (
 			IsAlive:  true,
 			Machine: schema.Machine{
 				MachID:     "109001",
-				UsageOfCPU: 28,
+				UsageOfCPU: 28.0,
 				TotalMem:   8192,
 				UsedMem:    3588,
 				TotalSwp:   10241,
 				UsedSwp:    6841,
-				LoadAvg:    []float32{1.71, 1.54, 1.36},
+				LoadAvg:    []float64{1.71, 1.54, 1.36},
 				UsageOfDisk: []schema.DiskUsage{
 					{Mount: "/export", TotalSize: 51200, UsedSize: 1245},
 					{Mount: "/", TotalSize: 10960, UsedSize: 7894},
 				},
+				ClockOffset: 2.11283,
 			},
 		},
 	}

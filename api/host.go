@@ -70,24 +70,17 @@ func buildHostModel(s *machine.MachineStatus) *schema.Host {
 		IsAlive:  s.IsAlive,
 		Machine: schema.Machine{
 			MachID:      s.MachID,
-			UsageOfCPU:  int32(s.MachStat.UsageOfCPU),
+			UsageOfCPU:  s.MachStat.UsageOfCPU,
 			TotalMem:    int32(s.MachStat.TotalMem),
 			UsedMem:     int32(s.MachStat.UsedMem),
 			TotalSwp:    int32(s.MachStat.TotalSwp),
 			UsedSwp:     int32(s.MachStat.UsedSwp),
-			LoadAvg:     transformLoadAvg(s.MachStat.LoadAvg),
+			LoadAvg:     s.MachStat.LoadAvg,
 			UsageOfDisk: transformDiskUsage(s.MachStat.UsageOfDisk),
+			ClockOffset: s.MachStat.ClockOffset,
 		},
 	}
 	return h
-}
-
-func transformLoadAvg(loads []float64) []float32 {
-	res := []float32{}
-	for _, load := range loads {
-		res = append(res, float32(load))
-	}
-	return res
 }
 
 func transformDiskUsage(disks []machine.DiskUsage) []schema.DiskUsage {

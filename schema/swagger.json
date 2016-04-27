@@ -716,8 +716,8 @@
           "type": "string"
         },
         "usageOfCPU": {
-          "type": "integer",
-          "format": "int32",
+          "type": "number",
+          "format": "double",
           "description": "percentage of CPU usage"
         },
         "totalMem": {
@@ -744,7 +744,7 @@
           "type": "array",
           "items": {
             "type": "number",
-            "format": "float"
+            "format": "double"
           }
         },
         "usageOfDisk": {
@@ -752,6 +752,11 @@
           "items": {
             "$ref": "#/definitions/DiskUsage"
           }
+        },
+        "clockOffset": {
+          "type": "number",
+          "format": "double",
+          "description": "unit Second"
         }
       }
     },

@@ -22,6 +22,7 @@ type MachineStat struct {
 	UsedSwp     uint64
 	LoadAvg     []float64
 	UsageOfDisk []DiskUsage
+	ClockOffset float64
 }
 
 type DiskUsage struct {

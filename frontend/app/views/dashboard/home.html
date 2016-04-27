@@ -29,7 +29,7 @@
                         </a>
                     </p>
                     <h5>CPU:</h5>
-                    <p>{{ host.isAlive? host.machine.usageOfCPU : 0 }}%</p>
+                    <p>{{ host.isAlive? (host.machine.usageOfCPU | number:2) : 0 }}%</p>
                     <h5> Mem Usage:</h5> 
                     <p>{{ host.isAlive? (host.machine.usedMem / 1024.0 | number:2) : 0 }} GB / {{ host.isAlive? (host.machine.totalMem / 1024.0 | number:2) : 0 }} GB </p>
                     <h5> Status: </h5>
