@@ -21,7 +21,7 @@ func NewPDService() Service {
 			version:      "1.0.0",
 			executor:     []string{},
 			command:      "bin/pd-server",
-			args:         []string{"--addr", "0.0.0.0:1234", "--advertise-addr", "$HOST_IP:1234", "--etcd", "$ETCD_ADDR", "--pprof", ":6060", "-L", "debug", "--cluster-id", "1"},
+			args:         []string{"--addr", "0.0.0.0:1234", "--advertise-addr", "$HOST_IP:1234", "--etcd", "$ETCD_ADDR", "--pprof", ":6060", "-L", "debug", "--cluster-id", "1", "--max-peer-num", "3"},
 			environments: map[string]string{},
 			endpoints: map[string]pkg.Endpoint{
 				"PD_ADDR": pkg.Endpoint{
@@ -49,6 +49,7 @@ func (s *PDService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoint
 	argset.String("L", "debug", "log level: info, debug, warn, error, fatal")
 	argset.String("pprof", ":6060", "pprof HTTP listening address")
 	argset.Uint64("cluster-id", 0, "Cluster ID")
+	argset.Uint("max-peer-num", 3, "max peer number for the region")
 	if err := argset.Parse(args); err != nil {
 		// handle error
 		return s.endpoints
