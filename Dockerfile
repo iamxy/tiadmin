@@ -14,7 +14,7 @@ RUN cd /go/src/github.com/pingcap/tiadmin/tiadmin \
 # tidb
 RUN git clone https://github.com/pingcap/tidb.git /go/src/github.com/pingcap/tidb \
     && cd /go/src/github.com/pingcap/tidb \
-    && make godep && make parser && make server \
+    && make parser && make server \
     && cp tidb-server/tidb-server /deploy/bin/tidb-server \
     && make clean
 
