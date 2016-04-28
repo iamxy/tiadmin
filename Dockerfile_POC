@@ -19,7 +19,8 @@ RUN git clone https://github.com/pingcap/tidb.git /go/src/github.com/pingcap/tid
     && make clean
 
 # pd
-RUN cd /go/src/github.com/pingcap/pd \
+RUN git clone https://github.com/pingcap/pd.git /go/src/github.com/pingcap/pd \
+    && cd /go/src/github.com/pingcap/pd \
     && make build \
     && cp bin/pd-server /deploy/bin/pd-server
 
