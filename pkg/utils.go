@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -18,19 +19,36 @@ const (
 var (
 	cmddir  string
 	rootdir string
+	datadir string
 )
 
 func init() {
-	path, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	cmddir = path
+	SetCmdDir()
+	SetRootDir()
+}
+
+func SetCmdDir() {
+	file, _ := exec.LookPath(os.Args[0])
+	path, _ := filepath.Abs(file)
+	cmddir = filepath.Dir(path)
+
+}
+
+func SetRootDir() {
+	path, _ := os.Getwd()
 	if filepath.Base(path) == "bin" {
 		rootdir = filepath.Dir(path)
 	} else {
 		rootdir = path
 	}
+}
+
+func SetDataDir(d string) {
+	if d == "" {
+		datadir = rootdir
+		return
+	}
+	datadir = d
 }
 
 func GetCmdDir() string {
@@ -39,6 +57,10 @@ func GetCmdDir() string {
 
 func GetRootDir() string {
 	return rootdir
+}
+
+func GetDataDir() string {
+	return datadir
 }
 
 func CheckFileExist(filepath string) (string, error) {

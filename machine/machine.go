@@ -85,7 +85,7 @@ func IsLocalMachineID(mID string) bool {
 }
 
 func readLocalMachineID() (string, error) {
-	fullPath := filepath.Join(pkg.GetRootDir(), machineDir, machineIDFile)
+	fullPath := filepath.Join(pkg.GetDataDir(), machineDir, machineIDFile)
 	if _, err := pkg.CheckFileExist(fullPath); err != nil {
 		return generateLocalMachineID()
 	} else {
@@ -110,7 +110,7 @@ func generateLocalMachineID() (string, error) {
 	io.WriteString(t, rand64)
 	hash := t.Sum(nil)
 
-	dir := filepath.Join(pkg.GetRootDir(), machineDir)
+	dir := filepath.Join(pkg.GetDataDir(), machineDir)
 	if _, err := os.Stat(dir); err != nil {
 		if !os.IsNotExist(err) {
 			return "", err

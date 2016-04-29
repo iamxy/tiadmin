@@ -34,7 +34,6 @@ type Config struct {
 	TokenLimit         int
 	IsMock             bool
 	APIPort            int
-	LogLevel           string
 }
 
 func ParseFlag() (*Config, error) {
@@ -50,7 +49,8 @@ func ParseFlag() (*Config, error) {
 	tokenLimit := flag.Int("limit", 100, "Maximum number of entries per page returned from API requests")
 	isMock := flag.Bool("mock", false, "Whether to privide mock APIs for test")
 	apiPort := flag.Int("api-port", 8080, "Http port for web UI and REST API")
-	logLevel := flag.String("log-level", "debug", "log level: info, debug, warn, error, fatal")
+	logLevel := flag.String("log-level", "debug", "Log level: info, debug, warn, error, fatal")
+	dataDir := flag.String("data-dir", "", "The path of data directory in which program's logs and storage data will be placed")
 
 	opts := globalconf.Options{EnvPrefix: EnvConfigPrefix}
 	if file, err := pathToConfigFile(); err == nil {
@@ -63,6 +63,7 @@ func ParseFlag() (*Config, error) {
 	}
 
 	log.SetLevelByString(*logLevel)
+	pkg.SetDataDir(*dataDir)
 
 	cfg := &Config{
 		EtcdServers:        pkg.NewStringSlice(*etcdServers),
@@ -77,7 +78,6 @@ func ParseFlag() (*Config, error) {
 		TokenLimit:         *tokenLimit,
 		IsMock:             *isMock,
 		APIPort:            *apiPort,
-		LogLevel:           *logLevel,
 	}
 	return cfg, nil
 }
@@ -87,9 +87,6 @@ func pathToConfigFile() (string, error) {
 	rd := pkg.GetRootDir()
 
 	if path, err := pkg.CheckFileExist(path.Join(cd, DefaultConfigFile)); err == nil {
-		return path, nil
-	}
-	if path, err := pkg.CheckFileExist(path.Join(cd, "conf", DefaultConfigFile)); err == nil {
 		return path, nil
 	}
 	if path, err := pkg.CheckFileExist(path.Join(rd, DefaultConfigFile)); err == nil {

@@ -45,7 +45,7 @@ func (pm *processManager) CreateProcess(target *ProcessStatus, endpoints map[str
 	meta := buildProcessMeta(target)
 	// TODO: stdout and stderr filepath should be assigned from client
 	proc, err := NewProcess(target.ProcID, target.SvcName, target.RunInfo.Executor, target.RunInfo.Command, target.RunInfo.Args,
-		"$SERVICE_$PROCID_$RUN.out", "$SERVICE_$PROCID_$RUN.err", target.RunInfo.Environment, meta, pkg.GetRootDir())
+		"$SERVICE_$PROCID_$RUN.out", "$SERVICE_$PROCID_$RUN.err", target.RunInfo.Environment, meta, pkg.GetDataDir())
 	if err != nil {
 		log.Errorf("Failed to create new local process, procID: %s, error: %v", target.ProcID, err)
 		return nil, err
