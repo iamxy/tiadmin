@@ -7,6 +7,7 @@ RUN apt-get update \
             file \
             libgflags-dev \
             libsnappy-dev \
+            liblz4-dev \
             zlib1g-dev \
             libbz2-dev \
         \
@@ -14,12 +15,12 @@ RUN apt-get update \
 
 # RocksDB
 RUN cd / \
-        && curl -L https://github.com/facebook/rocksdb/archive/v4.3.1.tar.gz | tar xz \
-        && cd rocksdb-4.3.1 \
+        && curl -L https://github.com/facebook/rocksdb/archive/v4.5.1.tar.gz | tar xz \
+        && cd rocksdb-4.5.1 \
         && make shared_lib \
         && make install-shared \
         && cd / \
-        && rm -rf /rocksdb-4.3.1
+        && rm -rf /rocksdb-4.5.1
 
 # Rust
 RUN curl -sSf https://static.rust-lang.org/rustup.sh | sh -s --  --disable-sudo -y --channel=nightly
