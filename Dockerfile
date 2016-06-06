@@ -27,6 +27,7 @@ RUN git clone https://github.com/pingcap/tikv.git /go/src/github.com/pingcap/tik
     && cd /go/src/github.com/pingcap/tikv \
     && cargo build --release \
     && cp target/release/tikv-server /deploy/bin/tikv-server \
+    && cp target/release/tikv-dump /deploy/bin/tikv-dump \
     && cargo clean
 
 # cleanup
