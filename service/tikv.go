@@ -21,7 +21,7 @@ func NewTiKVService() Service {
 			version:      "1.0.0",
 			executor:     []string{},
 			command:      "bin/tikv-server",
-			args:         []string{"-S", "raftkv", "--addr", "0.0.0.0:5551", "--advertise-addr", "$HOST_IP:5551", "--pd", "$PD_ADVERTISE_ADDR", "--store", "data", "--cluster-id", "1"},
+			args:         []string{"-S", "raftkv", "--addr", "0.0.0.0:5551", "--advertise-addr", "$HOST_IP:5551", "--etcd", "$ETCD_ADDR", "--store", "data", "--cluster-id", "1"},
 			environments: map[string]string{},
 			endpoints: map[string]pkg.Endpoint{
 				"TIKV_ADDR": pkg.Endpoint{
@@ -44,7 +44,7 @@ func (s *TiKVService) ParseEndpointFromArgs(args []string) map[string]pkg.Endpoi
 	argset.String("store", "data", "")
 	argset.String("S", "raftkv", "")
 	argset.String("cluster-id", "1", "")
-	argset.String("pd", "127.0.0.1:1234", "")
+	argset.String("etcd", "127.0.0.1:2379", "")
 	if err := argset.Parse(args); err != nil {
 		// handle error
 		return s.endpoints
